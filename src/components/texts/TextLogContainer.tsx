@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { useShake } from '../../hooks/useShake';
 import { RootState } from '../../store';
 import { updateRawLog } from '../../store/logs';
 import { StorageListener } from '../../utils/StorageListener';
@@ -11,8 +12,10 @@ const storageListener = new StorageListener();
 export const TextLogContainer = () => {
   const checkboxRef = useRef<HTMLInputElement>(null); // NOTE: +/- 여부를 스페이스바로 쉽게 토글하고, 탭으로 곧장 quick input으로 이동 가능하므로, checkbox에 focus 둠.
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [quickInput, setQuickInput] = useState('');
   const [isProductive, setIsProductive] = useState(true);
+  const { isShaking, shake } = useShake();
 
   const { currentDate, rawLogs } = useSelector(
     (state: RootState) => state.logs,
@@ -47,7 +50,10 @@ export const TextLogContainer = () => {
   };
 
   const appendLog = () => {
-    if (!quickInput.trim()) {
+    const isInputEmpty = !quickInput.trim();
+    if (isInputEmpty) {
+      shake();
+      inputRef.current?.focus();
       return;
     }
 
@@ -108,8 +114,11 @@ export const TextLogContainer = () => {
           checkboxRef={checkboxRef}
         />
         <input
+          ref={inputRef}
           type="text"
-          className="input input-bordered flex-1 text-xs"
+          className={`input input-bordered flex-1 text-xs ${
+            isShaking ? 'shake-animation' : ''
+          }`}
           placeholder="Enter 키를 눌러 활동 내역 추가"
           value={quickInput}
           onChange={handleQuickInputChange}
