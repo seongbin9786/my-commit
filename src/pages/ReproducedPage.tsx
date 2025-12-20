@@ -6,11 +6,12 @@ export const ReproducedPage = () => {
   const [minHeightZero, setMinHeightZero] = useState(true);
 
   return (
-    <div className="flex h-screen w-screen flex-col">
+    <div className="flex h-screen w-screen flex-col p-4">
       <label>
         <input
           type="checkbox"
           onChange={() => setMinHeightZero(!minHeightZero)}
+          checked={minHeightZero}
         />
         min-h-0 적용
       </label>
