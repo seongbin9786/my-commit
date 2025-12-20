@@ -20,6 +20,13 @@ export const TextLogContainer = () => {
   const dispatch = useDispatch();
   const setRawLogs = (nextRawLog: string) => dispatch(updateRawLog(nextRawLog));
 
+  useEffect(function updateChartEvery30Seconds() {
+    const timer = setInterval(() => {
+      dispatch(updateRawLog(rawLogs));
+    }, 30_000);
+    return () => clearInterval(timer);
+  }, []);
+
   // TODO: 이게 무슨 동작인지 확인하기
   // 최근에 닫았던 탭을 다시 살리는 경우, input value가 채워진 상태로 켜짐.
   // 강제로 value를 rawLog로 동기화시킴.
