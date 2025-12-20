@@ -102,11 +102,18 @@ export const TextLogContainer = () => {
         <input
           type="text"
           className="input input-bordered flex-1 text-xs"
-          placeholder="활동 내용 입력 후 엔터"
+          placeholder="Enter 키를 눌러 활동 내역 추가"
           value={quickInput}
           onChange={handleQuickInputChange}
           onKeyDown={handleEnterOnTextInput}
         />
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          onClick={appendLog}
+        >
+          추가
+        </button>
       </div>
 
       <textarea
