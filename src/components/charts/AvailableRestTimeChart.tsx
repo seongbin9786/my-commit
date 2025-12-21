@@ -29,13 +29,8 @@ export const AvailableRestTimeChart = ({
 
   const gradientOffset = calculateGradientOffset(data);
   const { highPoint, lowPoint } = findHighLowPoints(data);
-  const currentPoint = data.length > 0 ? data[data.length - 1] : null;
   const yAxisConfig = getNormalizedYAxisTicks(data);
-
-  const shouldShowCurrentPoint =
-    currentPoint &&
-    !isSamePoint(currentPoint, highPoint) &&
-    !isSamePoint(currentPoint, lowPoint);
+  const currentPointConfig = getCurrentPointConfig(data, highPoint, lowPoint);
 
   return (
     <ResponsiveContainer className="min-h-0">
@@ -111,19 +106,19 @@ export const AvailableRestTimeChart = ({
             />
           </ReferenceDot>
         )}
-        {shouldShowCurrentPoint && (
+        {currentPointConfig.shouldShow && currentPointConfig.point && (
           <ReferenceDot
-            x={currentPoint.offset}
-            y={currentPoint.need}
+            x={currentPointConfig.point.offset}
+            y={currentPointConfig.point.need}
             r={6}
-            fill="blue"
+            fill={currentPointConfig.color}
             stroke="white"
             strokeWidth={2}
           >
             <Label
-              value={formatMinutesWithSign(currentPoint.need)}
-              position="top"
-              fill="blue"
+              value={formatMinutesWithSign(currentPointConfig.point.need)}
+              position={currentPointConfig.position}
+              fill={currentPointConfig.color}
               fontSize={14}
               fontWeight="bold"
             />
@@ -181,6 +176,37 @@ function isSamePoint(
 ): boolean {
   if (!point1 || !point2) return false;
   return point1.offset === point2.offset;
+}
+
+type CurrentPointConfig = {
+  point: ChartDataPoint | null;
+  shouldShow: boolean;
+  color: 'red' | 'green';
+  position: 'top' | 'bottom';
+};
+
+function getCurrentPointConfig(
+  data: ChartDataPoint[],
+  highPoint: ChartDataPoint | null,
+  lowPoint: ChartDataPoint | null,
+): CurrentPointConfig {
+  const point = data.length > 0 ? data[data.length - 1] : null;
+
+  if (!point) {
+    return {
+      point: null,
+      shouldShow: false,
+      color: 'red',
+      position: 'top',
+    };
+  }
+
+  const shouldShow =
+    !isSamePoint(point, highPoint) && !isSamePoint(point, lowPoint);
+  const color = point.need >= 0 ? 'red' : 'green';
+  const position = point.need >= 0 ? 'top' : 'bottom';
+
+  return { point, shouldShow, color, position };
 }
 
 function getNormalizedYAxisTicks(data: ChartDataPoint[]) {
