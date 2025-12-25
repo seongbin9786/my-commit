@@ -4,6 +4,7 @@ import { DayNavigator } from '../components/days/DayNavigator';
 import { TextLogContainer } from '../components/texts/TextLogContainer';
 import { Area_AvailableRestTimeChart } from '../features/AvailableRestTimeChartArea';
 import { Area_ProductivePaceChart } from '../features/ProductivePaceChartArea';
+import { ThemeSelector } from '../features/theme/ThemeSelector';
 import { RootState } from '../store';
 
 export const LogWriterPage = () => {
@@ -20,7 +21,10 @@ export const LogWriterPage = () => {
         <h1 className="text-xs font-bold sm:text-sm">
           [기록지] ({currentDate})
         </h1>
-        <DayNavigator />
+        <div className="flex items-center gap-2">
+          <DayNavigator />
+          <ThemeSelector />
+        </div>
       </div>
       <div className="my-0 grid min-h-0 flex-1 grid-cols-1 grid-rows-4 p-4 sm:grid-cols-2 sm:grid-rows-2">
         <TextLogContainer />
