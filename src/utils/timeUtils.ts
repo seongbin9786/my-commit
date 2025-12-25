@@ -54,11 +54,18 @@ export const parseTimeInput = (input: string): string | null => {
     hours = parseInt(parts[0], 10);
     minutes = parseInt(parts[1], 10);
   } else {
-    if (trimmed.length < 3) return null;
-    const hoursStr = trimmed.slice(0, -2);
-    const minutesStr = trimmed.slice(-2);
-    hours = parseInt(hoursStr, 10);
-    minutes = parseInt(minutesStr, 10);
+    // 1~2자리: 시간으로 인식 (분은 00)
+    if (trimmed.length <= 2) {
+      hours = parseInt(trimmed, 10);
+      minutes = 0;
+    }
+    // 3자리 이상: 뒤 2자리는 분, 나머지는 시간
+    else {
+      const hoursStr = trimmed.slice(0, -2);
+      const minutesStr = trimmed.slice(-2);
+      hours = parseInt(hoursStr, 10);
+      minutes = parseInt(minutesStr, 10);
+    }
   }
 
   // 유효성 검증

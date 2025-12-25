@@ -23,7 +23,6 @@ describe('parseTimeInput', () => {
   it('잘못된 형식에 대해 null을 반환한다', () => {
     expect(parseTimeInput('invalid')).toBeNull();
     expect(parseTimeInput('25:60')).toBeNull(); // 60분은 유효하지 않음
-    expect(parseTimeInput('25')).toBeNull();
     expect(parseTimeInput('')).toBeNull();
   });
 
@@ -39,9 +38,13 @@ describe('parseTimeInput', () => {
     expect(parseTimeInput('26000')).toBe('260:00');
   });
 
+  it('1~2자리 숫자는 시간으로 인식한다', () => {
+    expect(parseTimeInput('9')).toBe('09:00');
+    expect(parseTimeInput('12')).toBe('12:00');
+    expect(parseTimeInput('25')).toBe('25:00');
+  });
+
   it('숫자만 입력 시 잘못된 형식에 대해 null을 반환한다', () => {
-    expect(parseTimeInput('1')).toBeNull(); // 1자리
-    expect(parseTimeInput('25')).toBeNull(); // 2자리
     expect(parseTimeInput('1260')).toBeNull(); // 60분은 유효하지 않음
   });
 });
