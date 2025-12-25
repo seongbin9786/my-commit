@@ -2,27 +2,32 @@ import { append0, justOneDayAwayAtMost } from './DateUtil';
 import { extractTimeAndText } from './TimeRangeFormatter';
 
 /**
- * 로그에 현재 시간을 추가하여 실시간 현황을 볼 수 있게 한다.
+ * 마지막 로그를 현재 시각까지 연장한 로그를 추가하여 실시간 현황을 볼 수 있게 한다.
  *
  * @param str 원본 로그
  * @param result 수정 후 로그
+ * @param shouldAdd24Hours 현재 시각에 24시간을 더할지 여부 (전날의 연장으로 표시하기 위함)
  * @returns 현재 시간의 기록을 추가한 result(수정 후 로그)
  *
  * TODO: 해당 메소드 호출을 화면 revisit할 때마다 해야 함
  */
-const addCurrentTime = (str: string[], result: string[], isDawn: boolean) => {
+const appendCurrentTimeLog = (
+  str: string[],
+  result: string[],
+  shouldAdd24Hours: boolean,
+) => {
   const lastLog = str[str.length - 1];
   const [, startedAt, prevText] = extractTimeAndText(lastLog);
 
   // <수면> 키워드가 있으면 종료한다.
-  // 오늘과 하루 이상 차이나도 addCurrentTime을 호출하지 않아야 함
+  // 오늘과 하루 이상 차이나도 appendCurrentTimeLog을 호출하지 않아야 함
   if (lastLog.includes('수면')) {
     return;
   }
 
   const now = new Date();
-  // 24시간이 넘으면 다음 날로 가기 때문에, 00:00으로 초기화되는데, 여기에 24시간을 더해줘야 한다.
-  const hours = isDawn ? now.getHours() + 24 : now.getHours();
+  // 어제를 새벽에 보고 있는 경우, 현재 시각(예: 01:00)을 전날 표기(25:00)로 표시하기 위해 24시간을 더한다.
+  const hours = shouldAdd24Hours ? now.getHours() + 24 : now.getHours();
   const minutes = now.getMinutes();
   result.push(
     `[${startedAt} -> ${append0(hours)}:${append0(minutes)}] ${prevText}`,
@@ -59,14 +64,18 @@ export const convertTimeFormat = (
     result.push(`[${startedAt} -> ${endedAt}] ${prevText}`);
   }
 
-  // addCurrentTime의 대상:
-  // 1. [오늘 내내]
-  // 2. [어제] 로그를 오늘 새벽에 안자고 기록하는 경우 <---- 버그 발생 지점
-  // ---> isDawn을 최대 어제까지만 적용해야 함. (어제 이전의 날짜에 대해선 실행하면 안 됨.)
-  const todayOrYesterday = justOneDayAwayAtMost(targetDay, today);
-  const dawn = new Date().getHours() < 7;
-  if (targetDay === today || (todayOrYesterday && dawn)) {
-    addCurrentTime(str, result, dawn);
+  // appendCurrentTimeLog의 대상:
+  // 1. [오늘] - 현재 시각까지의 구간을 추가 (새벽이어도 24시간 더하지 않음)
+  // 2. [어제를 새벽에 보는 경우] - 전날의 연장으로 표시하기 위해 24시간을 더함
+  const isTargetDayYesterday = justOneDayAwayAtMost(targetDay, today);
+  const isCurrentlyDawn = new Date().getHours() < 7;
+
+  if (targetDay === today) {
+    // 오늘 날짜를 보고 있으면 새벽이어도 24시간을 더하지 않음
+    appendCurrentTimeLog(str, result, false);
+  } else if (isTargetDayYesterday && isCurrentlyDawn) {
+    // 어제 날짜를 새벽에 보고 있으면 24시간을 더함 (전날의 연장으로 표시)
+    appendCurrentTimeLog(str, result, true);
   }
 
   return result.join('\n');
