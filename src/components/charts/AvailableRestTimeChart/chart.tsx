@@ -2,16 +2,15 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Label,
-  ReferenceDot,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 
-import { minutesToTimeString } from '../../utils/DateUtil';
-import { Log } from '../../utils/PaceUtil';
+import { minutesToTimeString } from '../../../utils/DateUtil';
+import { Log } from '../../../utils/PaceUtil';
+import { getPoints } from './points';
 
 interface AvailableRestTimeChartProps {
   logs: Log[];
@@ -30,9 +29,7 @@ export const AvailableRestTimeChart = ({
   }));
 
   const gradientOffset = calculateGradientOffset(data);
-  const { highPoint, lowPoint } = findHighLowPoints(data);
   const yAxisConfig = getNormalizedYAxisTicks(data);
-  const currentPointConfig = getCurrentPointConfig(data, highPoint, lowPoint);
 
   // X축 범위 계산: 데이터의 최소/최대 시각에 패딩 추가
   const { minOffset, maxOffset } = getMinMaxOffset(data);
@@ -79,60 +76,7 @@ export const AvailableRestTimeChart = ({
           stroke="#000"
           fill="url(#splitColor)"
         />
-        {highPoint && (
-          <ReferenceDot
-            x={highPoint.offset}
-            y={highPoint.need}
-            r={5}
-            fill="red"
-            stroke="white"
-            strokeWidth={2}
-          >
-            <Label
-              value={formatMinutesWithSign(highPoint.need)}
-              position="top"
-              fill="red"
-              fontSize={14}
-              fontWeight="bold"
-            />
-          </ReferenceDot>
-        )}
-        {lowPoint && (
-          <ReferenceDot
-            x={lowPoint.offset}
-            y={lowPoint.need}
-            r={5}
-            fill="green"
-            stroke="white"
-            strokeWidth={2}
-          >
-            <Label
-              value={formatMinutesWithSign(lowPoint.need)}
-              position="bottom"
-              fill="green"
-              fontSize={14}
-              fontWeight="bold"
-            />
-          </ReferenceDot>
-        )}
-        {currentPointConfig.shouldShow && currentPointConfig.point && (
-          <ReferenceDot
-            x={currentPointConfig.point.offset}
-            y={currentPointConfig.point.need}
-            r={6}
-            fill={currentPointConfig.color}
-            stroke="white"
-            strokeWidth={2}
-          >
-            <Label
-              value={formatMinutesWithSign(currentPointConfig.point.need)}
-              position={currentPointConfig.position}
-              fill={currentPointConfig.color}
-              fontSize={14}
-              fontWeight="bold"
-            />
-          </ReferenceDot>
-        )}
+        {getPoints(data)}
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -159,38 +103,6 @@ function calculateGradientOffset(data: ChartDataPoint[]): number {
   return dataMax / (dataMax - dataMin);
 }
 
-function findHighLowPoints(data: ChartDataPoint[]) {
-  if (data.length === 0) {
-    return { highPoint: null, lowPoint: null };
-  }
-
-  const highPoint = data.reduce((max, point) =>
-    point.need > max.need ? point : max,
-  );
-  const lowPoint = data.reduce((min, point) =>
-    point.need < min.need ? point : min,
-  );
-
-  return { highPoint, lowPoint };
-}
-
-function formatMinutesWithSign(minutes: number): string {
-  const absMinutes = Math.abs(minutes);
-  return minutesToTimeString(absMinutes);
-}
-
-const NEAR_POINT_THRESHOLD = 6;
-
-function isNearPoint(
-  point1: ChartDataPoint | null,
-  point2: ChartDataPoint | null,
-): boolean {
-  if (!point1 || !point2) {
-    return false;
-  }
-  return Math.abs(point1.offset - point2.offset) < NEAR_POINT_THRESHOLD;
-}
-
 function getMinMaxOffset(data: ChartDataPoint[]): {
   minOffset: number;
   maxOffset: number;
@@ -208,36 +120,6 @@ function getMinMaxOffset(data: ChartDataPoint[]): {
   }
 
   return { minOffset: min, maxOffset: max };
-}
-
-type CurrentPointConfig = {
-  point: ChartDataPoint | null;
-  shouldShow: boolean;
-  color: 'red' | 'green';
-  position: 'top' | 'bottom';
-};
-
-function getCurrentPointConfig(
-  data: ChartDataPoint[],
-  highPoint: ChartDataPoint | null,
-  lowPoint: ChartDataPoint | null,
-): CurrentPointConfig {
-  const currPoint = data.length > 0 ? data[data.length - 1] : null;
-  if (!currPoint) {
-    return {
-      point: null,
-      shouldShow: false,
-      color: 'red',
-      position: 'top',
-    };
-  }
-
-  const shouldShow =
-    !isNearPoint(currPoint, highPoint) && !isNearPoint(currPoint, lowPoint);
-  const color = currPoint.need >= 0 ? 'red' : 'green';
-  const position = currPoint.need >= 0 ? 'top' : 'bottom';
-
-  return { point: currPoint, shouldShow, color, position };
 }
 
 function getNormalizedYAxisTicks(data: ChartDataPoint[]) {
