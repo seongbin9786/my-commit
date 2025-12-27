@@ -1,15 +1,9 @@
 import { Label, ReferenceDot } from 'recharts';
 
 import { minutesToTimeString } from '../../../utils/DateUtil';
+import type { ChartDataPoint } from './dataPoint';
 
-interface Point {
-  offset: number;
-  productive: number;
-  wasted: number;
-  need: number;
-}
-
-export const getPoints = (data: Point[]) => {
+export const getPoints = (data: ChartDataPoint[]) => {
   const { highPoint, lowPoint } = findHighLowPoints(data);
   const currentPointConfig = getCurrentPointConfig(data, highPoint, lowPoint);
 
@@ -82,13 +76,6 @@ export const getPoints = (data: Point[]) => {
   }
 
   return points;
-};
-
-type ChartDataPoint = {
-  offset: number;
-  productive: number;
-  wasted: number;
-  need: number;
 };
 
 function findHighLowPoints(data: ChartDataPoint[]) {
