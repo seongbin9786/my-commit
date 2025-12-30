@@ -25,7 +25,7 @@ export const getCurrentTimeStringConsideringMaxTime = (
 
   if (maxTimeInMinutes !== -1) {
     let currentTimeInMinutes = hours * 60 + minutes;
-    while (currentTimeInMinutes <= maxTimeInMinutes) {
+    while (currentTimeInMinutes < maxTimeInMinutes) {
       hours += 24;
       currentTimeInMinutes = hours * 60 + minutes;
     }
