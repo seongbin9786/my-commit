@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addLogEntry, createLogItem } from '../../features/RawLogEditor';
 import { useShake } from '../../hooks/useShake';
 import { RootState } from '../../store';
+import { addFocusActivityInputListener } from '../../utils/commandEvents';
 import { updateRawLog } from '../../store/logs';
 import {
   clearRestNotification,
@@ -194,6 +195,13 @@ export const TextLogContainer = () => {
     storageListener.install(currentDate, setRawLogs);
     checkboxRef.current?.focus();
   }, [currentDate]);
+
+  // Command Palette에서 '신규 활동 추가' 명령 실행 시 focus
+  useEffect(() => {
+    return addFocusActivityInputListener(() => {
+      inputRef.current?.focus();
+    });
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
