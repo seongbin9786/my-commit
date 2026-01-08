@@ -1,6 +1,6 @@
 import './App.css';
 
-import { BarChart2, FileText, PlusCircle } from 'lucide-react';
+import { BarChart2, FileText, MinusCircle, PlusCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { Command, CommandPalette } from './components/CommandPalette';
@@ -22,24 +22,28 @@ export const App = () => {
         keywords: ['활동', '추가', '입력', 'activity', 'add', 'new'],
       },
       {
-        id: 'go-to-writer',
-        label: '기록지 페이지로 이동',
-        description: '오늘의 활동을 기록하는 페이지로 이동합니다',
-        icon: <FileText size={18} />,
+        id: 'add-production-start',
+        label: '생산 시작 기록 추가',
+        description: '현재 시각으로 생산 활동을 시작합니다',
+        icon: <PlusCircle size={18} />,
         action: () => {
-          window.location.href = '/';
+          import('./utils/commandEvents').then((module) => {
+            module.dispatchAddProductionStart();
+          });
         },
-        keywords: ['기록', '작성', 'writer', 'log'],
+        keywords: ['생산', 'production', 'start', '시작'],
       },
       {
-        id: 'go-to-summary',
-        label: '일일 요약 페이지로 이동',
-        description: '오늘의 활동 요약을 확인합니다',
-        icon: <BarChart2 size={18} />,
+        id: 'add-consumption-start',
+        label: '소비 시작 기록 추가',
+        description: '현재 시각으로 소비 활동을 시작합니다',
+        icon: <MinusCircle size={18} />,
         action: () => {
-          window.location.href = '/summary';
+          import('./utils/commandEvents').then((module) => {
+            module.dispatchAddConsumptionStart();
+          });
         },
-        keywords: ['요약', 'summary', '통계', 'stats'],
+        keywords: ['소비', 'consumption', 'start', '시작'],
       },
     ],
     [],

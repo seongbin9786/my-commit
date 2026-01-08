@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { Search } from 'lucide-react';
+import { MinusCircle, PlusCircle, Search } from 'lucide-react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 export interface Command {
@@ -27,11 +27,50 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+
   // 검색어로 커맨드 필터링
   const filteredCommands = useMemo(() => {
-    if (!searchQuery.trim()) return commands;
+    const trimmedQuery = searchQuery.trim();
 
-    const query = searchQuery.toLowerCase();
+    // 1. Dynamic Command: 생산 (+ ...)
+    if (trimmedQuery.startsWith('+')) {
+      const content = trimmedQuery.substring(1).trim();
+      return [
+        {
+          id: 'dynamic-add-production',
+          label: content ? `생산 기록 추가: ${content}` : '생산 기록 추가',
+          description: '입력한 내용으 생산 기록을 추가합니다',
+          icon: <PlusCircle size={18} />,
+          action: () => {
+            import('../../utils/commandEvents').then((module) => {
+              module.dispatchAddProductionStart(content);
+            });
+          },
+        },
+      ];
+    }
+
+    // 2. Dynamic Command: 소비 (- ...)
+    if (trimmedQuery.startsWith('-')) {
+      const content = trimmedQuery.substring(1).trim();
+      return [
+        {
+          id: 'dynamic-add-consumption',
+          label: content ? `소비 기록 추가: ${content}` : '소비 기록 추가',
+          description: '입력한 내용으로 소비 기록을 추가합니다',
+          icon: <MinusCircle size={18} />,
+          action: () => {
+            import('../../utils/commandEvents').then((module) => {
+              module.dispatchAddConsumptionStart(content);
+            });
+          },
+        },
+      ];
+    }
+
+    if (!trimmedQuery) return commands;
+
+    const query = trimmedQuery.toLowerCase();
     return commands.filter((command) => {
       const labelMatch = command.label.toLowerCase().includes(query);
       const descriptionMatch = command.description

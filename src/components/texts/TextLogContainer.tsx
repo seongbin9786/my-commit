@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { addLogEntry, createLogItem } from '../../features/RawLogEditor';
@@ -10,7 +10,11 @@ import {
   clearRestNotification,
   setRestNotification,
 } from '../../store/restNotification';
-import { addFocusActivityInputListener } from '../../utils/commandEvents';
+import {
+  addConsumptionStartListener,
+  addFocusActivityInputListener,
+  addProductionStartListener,
+} from '../../utils/commandEvents';
 import { StorageListener } from '../../utils/StorageListener';
 import {
   getCurrentTimeStringConsideringMaxTime,
@@ -43,6 +47,12 @@ export const TextLogContainer = () => {
   );
   const dispatch = useDispatch();
   const setRawLogs = (nextRawLog: string) => dispatch(updateRawLog(nextRawLog));
+
+  // 이벤트 핸들러에서 항상 최신 rawLogs를 참조하기 위한 ref
+  const rawLogsRef = useRef(rawLogs);
+  useEffect(() => {
+    rawLogsRef.current = rawLogs;
+  }, [rawLogs]);
 
   // placeholder용: maxTime이 고려된 현재 시각
   const maxTime = getMaxTimeFromLogs(rawLogs);
@@ -196,12 +206,48 @@ export const TextLogContainer = () => {
     checkboxRef.current?.focus();
   }, [currentDate]);
 
-  // Command Palette에서 '신규 활동 추가' 명령 실행 시 focus
+  const handleQuickAppend = useCallback(
+    (isProductiveLog: boolean, message: string) => {
+      const timeStr = currentTimeConsideringMaxTime;
+
+      if (!isProductiveLog) {
+        setPendingRestLog({ timeStr, content: message });
+        setIsRestDialogOpen(true);
+        return;
+      }
+
+      const newLogItem = createLogItem(timeStr, true, message);
+      const updatedRawLog = addLogEntry(rawLogsRef.current, newLogItem, false);
+
+      setRawLogs(updatedRawLog);
+      dispatch(clearRestNotification());
+      resetInputs();
+      // 커맨드 팔레트가 닫힌 후 포커스 이동
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    },
+    [currentTimeConsideringMaxTime, dispatch],
+  );
+
+  // Command Palette & Keyboard shortcuts
   useEffect(() => {
-    return addFocusActivityInputListener(() => {
-      inputRef.current?.focus();
-    });
-  }, []);
+    const cleanups = [
+      addFocusActivityInputListener(() => {
+        inputRef.current?.focus();
+      }),
+      addProductionStartListener((content) => {
+        handleQuickAppend(true, content || '생산');
+      }),
+      addConsumptionStartListener((content) => {
+        handleQuickAppend(false, content || '소비');
+      }),
+    ];
+
+    return () => {
+      cleanups.forEach((cleanup) => cleanup());
+    };
+  }, [handleQuickAppend]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -243,6 +289,27 @@ export const TextLogContainer = () => {
         >
           추가
         </button>
+
+        {/* 간단 입력 영역 */}
+        <div className="flex items-center gap-1 border-l border-base-300 pl-2">
+          <span className="text-xs text-base-content/60">간단 입력</span>
+          <button
+            type="button"
+            className="btn btn-outline btn-success btn-xs"
+            onClick={() => handleQuickAppend(true, '생산')}
+            title="생산 기록 추가"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline btn-warning btn-xs"
+            onClick={() => handleQuickAppend(false, '소비')}
+            title="소비 기록 추가"
+          >
+            −
+          </button>
+        </div>
       </div>
 
       <textarea
