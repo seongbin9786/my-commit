@@ -1,6 +1,6 @@
 import './App.css';
 
-import { BarChart2, FileText, MinusCircle, PlusCircle } from 'lucide-react';
+import { MinusCircle, PlusCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { Command, CommandPalette } from './components/CommandPalette';
