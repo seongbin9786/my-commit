@@ -1,6 +1,6 @@
 service: my-time-api
 
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
@@ -9,7 +9,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 256
   timeout: 10
-  
+
   environment:
     SLS_STAGE: ${self:provider.stage}
     DYNAMODB_TABLE_USERS: ${self:custom.usersTableName}
@@ -35,16 +35,24 @@ provider:
 custom:
   usersTableName: my-time-users-${self:provider.stage}
   logsTableName: my-time-logs-${self:provider.stage}
-  
+
   isOffline:
-    local: 'true'
-    dev: 'false'
-    prod: 'false'
+    local: "true"
+    dev: "false"
+    prod: "false"
 
   serverless-offline:
     httpPort: 3000
     noPrependStageInUrl: true
     reloadHandler: true
+
+  customDomain:
+    domainName: api.yourdomain.com
+    certificateName: "*.yourdomain.com"
+    basePath: ""
+    stage: ${self:provider.stage}
+    createRoute53Record: false
+    endpointType: "regional"
 
   dynamodb:
     stages:
@@ -66,11 +74,12 @@ functions:
   api:
     handler: dist/index.handler
     events:
-      - httpApi: '*'
+      - httpApi: "*"
 
 plugins:
   - serverless-dynamodb
   - serverless-offline
+  - serverless-domain-manager
 
 resources:
   Resources:

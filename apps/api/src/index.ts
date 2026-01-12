@@ -21,9 +21,14 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: ["http://localhost:5173", "http://localhost:4000"],
+    origin: (origin) => {
+      if (origin.includes("localhost") || origin.endsWith("notiontoweb.com")) {
+        return origin;
+      }
+      return origin;
+    },
     credentials: true,
-  }),
+  })
 );
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretKey";
@@ -124,7 +129,7 @@ app.post("/raw-logs", async (c) => {
       date,
       content || "",
       contentHash,
-      parentHash ?? null,
+      parentHash ?? null
     );
     return c.json({ success: true, data: savedLog });
   } catch (error) {

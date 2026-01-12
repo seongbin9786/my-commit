@@ -30,7 +30,7 @@ export const getAllLogs = async (userId: string): Promise<LogItem[]> => {
       ExpressionAttributeValues: {
         ":userId": userId,
       },
-    }),
+    })
   );
   return (result.Items as LogItem[]) || [];
 };
@@ -40,7 +40,7 @@ export const saveLog = async (
   date: string,
   content: string,
   contentHash: string,
-  parentHash: string | null,
+  parentHash: string | null
 ) => {
   const db = getDynamoDb();
 
@@ -71,7 +71,7 @@ export const saveLog = async (
           originalVersion: currentLog.version,
           backedUpAt: now,
         },
-      }),
+      })
     );
 
     nextVersion = (currentLog.version || 0) + 1;
@@ -92,7 +92,7 @@ export const saveLog = async (
     new PutCommand({
       TableName: LOGS_TABLE_NAME,
       Item: newLog,
-    }),
+    })
   );
 
   return newLog;
@@ -100,7 +100,7 @@ export const saveLog = async (
 
 export const getLog = async (
   userId: string,
-  date: string,
+  date: string
 ): Promise<LogItem | undefined> => {
   const result = await getDynamoDb().send(
     new GetCommand({
@@ -109,7 +109,7 @@ export const getLog = async (
         userId,
         date,
       },
-    }),
+    })
   );
   return result.Item as LogItem;
 };
@@ -126,7 +126,7 @@ export const getLogBackups = async (userId: string, date: string) => {
         ":date": date,
       },
       // ScanIndexForward: false, // Show newest backups first?
-    }),
+    })
   );
 
   return result.Items as BackupItem[];
@@ -138,7 +138,7 @@ export const bulkSaveLogs = async (
     content: string;
     contentHash: string;
     parentHash: string | null;
-  }[],
+  }[]
 ) => {
   const results = [];
   for (const log of logs) {
@@ -147,7 +147,7 @@ export const bulkSaveLogs = async (
       log.date,
       log.content,
       log.contentHash,
-      log.parentHash,
+      log.parentHash
     );
     results.push(saved);
   }
