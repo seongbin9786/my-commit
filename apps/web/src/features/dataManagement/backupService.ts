@@ -36,15 +36,59 @@ export const downloadBackupInfo = (backup: BackupData) => {
   saveAs(blob, `my-time-backup-${new Date().toISOString().slice(0, 10)}.json`);
 };
 
+/**
+ * Migrates legacy backup format to the new BackupData format.
+ * Legacy format: flat object with date keys and settings mixed at the same level
+ * New format: { version, exportedAt, logs: {...}, settings: {...} }
+ */
+const migrateLegacyBackup = (
+  data: Record<string, unknown>,
+): BackupData | null => {
+  // If it already has version field, it's the new format
+  if ('version' in data && 'logs' in data) {
+    return data as unknown as BackupData;
+  }
+
+  // Check if this looks like a legacy format (has date keys at root level)
+  const hasDateKeys = Object.keys(data).some((key) => LOG_DATE_REGEX.test(key));
+  if (!hasDateKeys) {
+    return null; // Neither new nor legacy format
+  }
+
+  // Migrate legacy format
+  const logs: Record<string, string> = {};
+  const settings: Record<string, string> = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (typeof value !== 'string') return;
+
+    if (LOG_DATE_REGEX.test(key)) {
+      logs[key] = value;
+    } else if (SETTING_KEYS.includes(key)) {
+      settings[key] = value;
+    }
+  });
+
+  return {
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    logs,
+    settings,
+  };
+};
+
 export const importBackup = async (file: File): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const backup = JSON.parse(content) as BackupData;
+        const rawData = JSON.parse(content) as Record<string, unknown>;
 
-        if (!backup.logs || !backup.settings) {
+        // Try to migrate if it's a legacy format
+        const backup = migrateLegacyBackup(rawData);
+
+        if (!backup || !backup.logs) {
           throw new Error('Invalid backup format');
         }
 
