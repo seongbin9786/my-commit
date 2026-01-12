@@ -13,6 +13,8 @@ export type LogState = {
   currentDate: string;
   rawLogs: string;
   logsForCharts: Log[];
+  syncStatus: 'idle' | 'pending' | 'syncing' | 'synced' | 'error';
+  lastSyncedAt: string | null;
 };
 
 // reducer 바깥이어서 초기값 설정 구문이 순수하지 않아도 괜찮을 듯
@@ -23,6 +25,8 @@ const initialState: LogState = {
   currentDate: initialDate,
   rawLogs: initialRawLogs,
   logsForCharts: createLogsFromString(initialRawLogs, initialDate),
+  syncStatus: 'idle',
+  lastSyncedAt: null,
 };
 
 export const LogSlice = createSlice({
@@ -45,11 +49,28 @@ export const LogSlice = createSlice({
       console.log(`[reducer] updateRawLog at ${currentDate}`);
       state.rawLogs = newRawLogs;
       state.logsForCharts = createLogsFromString(newRawLogs, currentDate);
+      // If user types, we are pending sync
+      if (state.syncStatus !== 'syncing') {
+        state.syncStatus = 'pending';
+      }
+    },
+    setSyncStatus: (state, action: PayloadAction<LogState['syncStatus']>) => {
+      state.syncStatus = action.payload;
+    },
+    setLastSyncedAt: (state, action: PayloadAction<string>) => {
+      state.lastSyncedAt = action.payload;
     },
   },
 });
 
 export const {
-  actions: { goToToday, goToPrevDate, goToNextDate, updateRawLog },
+  actions: {
+    goToToday,
+    goToPrevDate,
+    goToNextDate,
+    updateRawLog,
+    setSyncStatus,
+    setLastSyncedAt,
+  },
   reducer: LogsReducer,
 } = LogSlice;

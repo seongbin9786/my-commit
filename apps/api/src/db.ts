@@ -35,3 +35,6 @@ export const TABLE_NAME =
 export const LOGS_TABLE_NAME =
   process.env.DYNAMODB_TABLE ||
   `my-time-logs-${process.env.SLS_STAGE || "dev"}`;
+export const LOG_BACKUPS_TABLE_NAME =
+  process.env.DYNAMODB_TABLE_BACKUPS ||
+  `my-time-log-backups-${process.env.SLS_STAGE || "dev"}`;

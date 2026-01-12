@@ -3,42 +3,60 @@
  * Usage: npx tsx scripts/create-local-tables.ts
  */
 
-import { CreateTableCommand, DynamoDBClient, ListTablesCommand } from '@aws-sdk/client-dynamodb';
+import {
+  CreateTableCommand,
+  DynamoDBClient,
+  ListTablesCommand,
+} from "@aws-sdk/client-dynamodb";
 
-const STAGE = process.env.SLS_STAGE || 'dev';
+const STAGE = process.env.SLS_STAGE || "dev";
 
 const client = new DynamoDBClient({
-  region: 'ap-northeast-2',
-  endpoint: 'http://localhost:8000',
+  region: "ap-northeast-2",
+  endpoint: "http://localhost:8000",
   credentials: {
-    accessKeyId: 'local',
-    secretAccessKey: 'local',
+    accessKeyId: "local",
+    secretAccessKey: "local",
   },
 });
 
 const tables = [
   {
     TableName: `my-time-users-${STAGE}`,
-    KeySchema: [{ AttributeName: 'username', KeyType: 'HASH' as const }],
-    AttributeDefinitions: [{ AttributeName: 'username', AttributeType: 'S' as const }],
-    BillingMode: 'PAY_PER_REQUEST' as const,
+    KeySchema: [{ AttributeName: "username", KeyType: "HASH" as const }],
+    AttributeDefinitions: [
+      { AttributeName: "username", AttributeType: "S" as const },
+    ],
+    BillingMode: "PAY_PER_REQUEST" as const,
   },
   {
     TableName: `my-time-logs-${STAGE}`,
     KeySchema: [
-      { AttributeName: 'userId', KeyType: 'HASH' as const },
-      { AttributeName: 'date', KeyType: 'RANGE' as const },
+      { AttributeName: "userId", KeyType: "HASH" as const },
+      { AttributeName: "date", KeyType: "RANGE" as const },
     ],
     AttributeDefinitions: [
-      { AttributeName: 'userId', AttributeType: 'S' as const },
-      { AttributeName: 'date', AttributeType: 'S' as const },
+      { AttributeName: "userId", AttributeType: "S" as const },
+      { AttributeName: "date", AttributeType: "S" as const },
     ],
-    BillingMode: 'PAY_PER_REQUEST' as const,
+    BillingMode: "PAY_PER_REQUEST" as const,
+  },
+  {
+    TableName: `my-time-log-backups-${STAGE}`,
+    KeySchema: [
+      { AttributeName: "userId", KeyType: "HASH" as const },
+      { AttributeName: "backupId", KeyType: "RANGE" as const },
+    ],
+    AttributeDefinitions: [
+      { AttributeName: "userId", AttributeType: "S" as const },
+      { AttributeName: "backupId", AttributeType: "S" as const },
+    ],
+    BillingMode: "PAY_PER_REQUEST" as const,
   },
 ];
 
 async function createTables() {
-  console.log('🔍 기존 테이블 확인 중...');
+  console.log("🔍 기존 테이블 확인 중...");
 
   const { TableNames = [] } = await client.send(new ListTablesCommand({}));
 
@@ -57,8 +75,8 @@ async function createTables() {
     }
   }
 
-  console.log('\n🎉 로컬 DynamoDB 테이블 설정 완료!');
-  console.log('📊 DynamoDB Admin UI: http://localhost:8001');
+  console.log("\n🎉 로컬 DynamoDB 테이블 설정 완료!");
+  console.log("📊 DynamoDB Admin UI: http://localhost:8001");
 }
 
 createTables().catch(console.error);

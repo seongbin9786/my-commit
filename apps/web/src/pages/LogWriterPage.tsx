@@ -3,12 +3,16 @@ import { useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { AuthHeader } from '../components/auth/AuthHeader';
+import { SyncStatusIndicator } from '../components/common/SyncStatusIndicator';
 import { DayNavigator } from '../components/days/DayNavigator';
 import { TextLogContainer } from '../components/texts/TextLogContainer';
 import { Area_AvailableRestTimeChart } from '../features/AvailableRestTimeChartArea';
-import { Area_ProductivePaceChart } from '../features/ProductivePaceChartArea';
 import { DataManagementDialog } from '../features/dataManagement/DataManagementDialog';
-import { useRemainingTime, useRestNotification } from '../features/restNotification';
+import { Area_ProductivePaceChart } from '../features/ProductivePaceChartArea';
+import {
+  useRemainingTime,
+  useRestNotification,
+} from '../features/restNotification';
 import { SoundSettingsDialog } from '../features/soundSettings';
 import { ThemeSelector } from '../features/theme/ThemeSelector';
 import { RootState } from '../store';
@@ -59,6 +63,7 @@ export const LogWriterPage = () => {
           >
             <Bell size={16} />
           </button>
+
           <button
             type="button"
             className="btn btn-circle btn-ghost"
@@ -67,6 +72,7 @@ export const LogWriterPage = () => {
           >
             <Settings size={16} />
           </button>
+          <SyncStatusIndicator />
           <ThemeSelector />
           <AuthHeader />
         </div>

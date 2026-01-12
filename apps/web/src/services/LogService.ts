@@ -1,74 +1,135 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export async function saveLogToServer(date: string, content: string) {
+export interface ServerLogResponse {
+  success: boolean;
+  data?: {
+    userId: string;
+    date: string;
+    content: string;
+    updatedAt: string;
+    version: number;
+  };
+}
+
+export interface BackupItem {
+  userId: string;
+  backupId: string;
+  date: string;
+  content: string;
+  originalUpdatedAt?: string;
+  originalVersion?: number;
+  backedUpAt: string;
+}
+
+export async function saveLogToServer(
+  date: string,
+  content: string,
+  updatedAt?: string,
+): Promise<ServerLogResponse | null> {
   const token = localStorage.getItem('token');
-  if (!token) return;
+  if (!token) return null;
 
   try {
     const response = await fetch(`${API_URL}/raw-logs`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ date, content }),
+      body: JSON.stringify({ date, content, updatedAt }),
     });
     if (!response.ok) {
-        if (response.status === 401) {
-            // Token expired or invalid
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-        }
-        console.error('Failed to save log to server:', response.statusText);
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
+      console.error('Failed to save log to server:', response.statusText);
+      return null;
     }
+    return response.json();
   } catch (error) {
     console.error('Failed to save log to server:', error);
+    return null;
   }
 }
 
-export async function getLogFromServer(date: string): Promise<string | null> {
+export async function getLogBackupsFromServer(
+  date: string,
+): Promise<BackupItem[]> {
+  const token = localStorage.getItem('token');
+  if (!token) return [];
+
+  try {
+    const response = await fetch(`${API_URL}/raw-logs/${date}/backups`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) {
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+      }
+      return [];
+    }
+    const result = await response.json();
+    return result.data || [];
+  } catch (error) {
+    console.error('Failed to fetch backups from server:', error);
+    return [];
+  }
+}
+
+export async function getLogFromServer(
+  date: string,
+): Promise<ServerLogResponse['data'] | null> {
   const token = localStorage.getItem('token');
   if (!token) return null;
 
   try {
     const response = await fetch(`${API_URL}/raw-logs/${date}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     if (!response.ok) {
-        if (response.status === 401) {
-             localStorage.removeItem('token');
-        }
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+      }
       return null;
     }
     const data = await response.json();
-    return data.content || '';
+    return data;
   } catch (error) {
     console.error('Failed to fetch log from server:', error);
     return null;
   }
 }
 
-export async function login(username: string, password: string): Promise<{ access_token: string } | null> {
-    const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-    });
-    if (!response.ok) {
-        throw new Error('Login failed');
-    }
-    return response.json();
+export async function login(
+  username: string,
+  password: string,
+): Promise<{ access_token: string } | null> {
+  const response = await fetch(`${API_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!response.ok) {
+    throw new Error('Login failed');
+  }
+  return response.json();
 }
 
-export async function signup(username: string, password: string): Promise<void> {
-    const response = await fetch(`${API_URL}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-    });
-    if (!response.ok) {
-        throw new Error('Signup failed');
-    }
+export async function signup(
+  username: string,
+  password: string,
+): Promise<void> {
+  const response = await fetch(`${API_URL}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!response.ok) {
+    throw new Error('Signup failed');
+  }
 }
