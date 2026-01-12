@@ -42,3 +42,6 @@ coverage/
 # Serverless
 .serverless
 .dynamodb
+
+# DynamoDB Local Data
+.dynamodb-data

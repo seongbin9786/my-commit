@@ -22,7 +22,13 @@ export const getDynamoDb = (): DynamoDBDocumentClient => {
 
   const client = new DynamoDBClient({
     region: process.env.AWS_REGION || "ap-northeast-2",
-    ...(endpoint && { endpoint }),
+    ...(endpoint && {
+      endpoint,
+      credentials: {
+        accessKeyId: "local",
+        secretAccessKey: "local",
+      },
+    }),
   });
 
   docClient = DynamoDBDocumentClient.from(client);

@@ -1,29 +1,28 @@
-version: "3.8"
-
 services:
-  # ============================================
-  # 옵션 1: DynamoDB Local만 사용 (기본, 가벼움)
-  # ============================================
   dynamodb-local:
     image: amazon/dynamodb-local:latest
     container_name: my-time-dynamodb-local
-    profiles: ["dynamodb", "default"]
     ports:
       - "8000:8000"
-    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    command:
+      [
+        "-jar",
+        "DynamoDBLocal.jar",
+        "-sharedDb",
+        "-dbPath",
+        "/home/dynamodblocal/data",
+      ]
     volumes:
-      - dynamodb_data:/home/dynamodblocal/data
+      - ./.dynamodb-data:/home/dynamodblocal/data
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://localhost:8000 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  # DynamoDB Admin UI (선택사항)
   dynamodb-admin:
     image: aaronshaf/dynamodb-admin:latest
     container_name: my-time-dynamodb-admin
-    profiles: ["dynamodb", "default"]
     ports:
       - "8001:8001"
     environment:
@@ -33,6 +32,3 @@ services:
       - AWS_SECRET_ACCESS_KEY=local
     depends_on:
       - dynamodb-local
-
-volumes:
-  dynamodb_data:
