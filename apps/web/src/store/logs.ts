@@ -9,24 +9,34 @@ import { createLogsFromString } from '../utils/LogConverter';
 import { Log } from '../utils/PaceUtil';
 import { loadFromStorage } from '../utils/StorageUtil';
 
+export type ConflictState = {
+  localContent: string;
+  serverContent: string;
+  baseContent: string;
+  localUpdatedAt: string;
+  serverUpdatedAt: string;
+};
+
 export type LogState = {
   currentDate: string;
   rawLogs: string;
   logsForCharts: Log[];
   syncStatus: 'idle' | 'pending' | 'syncing' | 'synced' | 'error';
   lastSyncedAt: string | null;
+  conflict: ConflictState | null; // 충돌 상태
 };
 
 // reducer 바깥이어서 초기값 설정 구문이 순수하지 않아도 괜찮을 듯
 const initialDate = getTodayString();
-const initialRawLogs = loadFromStorage(initialDate);
+const initialLocalData = loadFromStorage(initialDate);
 
 const initialState: LogState = {
   currentDate: initialDate,
-  rawLogs: initialRawLogs,
-  logsForCharts: createLogsFromString(initialRawLogs, initialDate),
+  rawLogs: initialLocalData.content,
+  logsForCharts: createLogsFromString(initialLocalData.content, initialDate),
   syncStatus: 'idle',
   lastSyncedAt: null,
+  conflict: null,
 };
 
 export const LogSlice = createSlice({
@@ -60,6 +70,24 @@ export const LogSlice = createSlice({
     setLastSyncedAt: (state, action: PayloadAction<string>) => {
       state.lastSyncedAt = action.payload;
     },
+    setConflict: (state, action: PayloadAction<ConflictState | null>) => {
+      state.conflict = action.payload;
+    },
+    resolveConflict: (
+      state,
+      action: PayloadAction<{ choice: 'local' | 'server' }>,
+    ) => {
+      if (!state.conflict) return;
+
+      const content =
+        action.payload.choice === 'local'
+          ? state.conflict.localContent
+          : state.conflict.serverContent;
+
+      state.rawLogs = content;
+      state.logsForCharts = createLogsFromString(content, state.currentDate);
+      state.conflict = null;
+    },
   },
 });
 
@@ -71,6 +99,8 @@ export const {
     updateRawLog,
     setSyncStatus,
     setLastSyncedAt,
+    setConflict,
+    resolveConflict,
   },
   reducer: LogsReducer,
 } = LogSlice;

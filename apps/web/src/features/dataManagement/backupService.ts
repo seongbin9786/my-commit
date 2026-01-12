@@ -43,7 +43,7 @@ export const importBackup = async (file: File): Promise<boolean> => {
       try {
         const content = e.target?.result as string;
         const backup = JSON.parse(content) as BackupData;
-        
+
         if (!backup.logs || !backup.settings) {
           throw new Error('Invalid backup format');
         }
@@ -72,9 +72,14 @@ export const importBackup = async (file: File): Promise<boolean> => {
   });
 };
 
+interface LogExportRow {
+  Date: string;
+  Content: string;
+}
+
 export const exportLogsToExcel = () => {
-  const allLogs: any[] = [];
-  
+  const allLogs: LogExportRow[] = [];
+
   // Collect all data
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -84,10 +89,10 @@ export const exportLogsToExcel = () => {
       // Requirements say "Excel (Spreadsheet)". Better to have readable format.
       // But currently raw log is just text. Parsing logic is in `logs.ts`.
       // For now, let's dump date and raw text content, and maybe simple line split.
-      
+
       allLogs.push({
         Date: key,
-        Content: rawLog
+        Content: rawLog,
       });
     }
   }
@@ -102,4 +107,40 @@ export const exportLogsToExcel = () => {
   const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
   const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
   saveAs(data, `my-time-logs-${new Date().toISOString().slice(0, 10)}.xlsx`);
+};
+
+export const fetchAndDownloadServerBackup = async (token: string) => {
+  const response = await fetch(`${import.meta.env.VITE_API_URL}/raw-logs`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch server logs');
+  }
+
+  const result = await response.json();
+  const serverLogs = result.data;
+
+  const backupData: BackupData = {
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    logs: serverLogs.reduce(
+      (acc: Record<string, string>, log: { date: string; content: string }) => {
+        acc[log.date] = log.content;
+        return acc;
+      },
+      {},
+    ),
+    settings: {}, // Server backup currently only includes logs
+  };
+
+  const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  });
+  saveAs(
+    blob,
+    `my-time-server-backup-${new Date().toISOString().slice(0, 10)}.json`,
+  );
 };

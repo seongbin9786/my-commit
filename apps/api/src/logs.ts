@@ -1,10 +1,13 @@
 import { GetCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+
 import { getDynamoDb, LOG_BACKUPS_TABLE_NAME, LOGS_TABLE_NAME } from "./db";
 
 export interface LogItem {
   userId: string;
   date: string;
   content: string;
+  contentHash: string;
+  parentHash: string | null;
   updatedAt?: string;
   version?: number;
 }
@@ -19,11 +22,25 @@ export interface BackupItem {
   backedUpAt: string;
 }
 
+export const getAllLogs = async (userId: string): Promise<LogItem[]> => {
+  const result = await getDynamoDb().send(
+    new QueryCommand({
+      TableName: LOGS_TABLE_NAME,
+      KeyConditionExpression: "userId = :userId",
+      ExpressionAttributeValues: {
+        ":userId": userId,
+      },
+    }),
+  );
+  return (result.Items as LogItem[]) || [];
+};
+
 export const saveLog = async (
   userId: string,
   date: string,
   content: string,
-  clientUpdatedAt?: string
+  contentHash: string,
+  parentHash: string | null,
 ) => {
   const db = getDynamoDb();
 
@@ -54,7 +71,7 @@ export const saveLog = async (
           originalVersion: currentLog.version,
           backedUpAt: now,
         },
-      })
+      }),
     );
 
     nextVersion = (currentLog.version || 0) + 1;
@@ -65,6 +82,8 @@ export const saveLog = async (
     userId,
     date,
     content,
+    contentHash,
+    parentHash,
     updatedAt: now,
     version: nextVersion,
   };
@@ -73,7 +92,7 @@ export const saveLog = async (
     new PutCommand({
       TableName: LOGS_TABLE_NAME,
       Item: newLog,
-    })
+    }),
   );
 
   return newLog;
@@ -81,7 +100,7 @@ export const saveLog = async (
 
 export const getLog = async (
   userId: string,
-  date: string
+  date: string,
 ): Promise<LogItem | undefined> => {
   const result = await getDynamoDb().send(
     new GetCommand({
@@ -90,7 +109,7 @@ export const getLog = async (
         userId,
         date,
       },
-    })
+    }),
   );
   return result.Item as LogItem;
 };
@@ -107,7 +126,7 @@ export const getLogBackups = async (userId: string, date: string) => {
         ":date": date,
       },
       // ScanIndexForward: false, // Show newest backups first?
-    })
+    }),
   );
 
   return result.Items as BackupItem[];

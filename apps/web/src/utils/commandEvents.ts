@@ -20,7 +20,6 @@ export const addFocusActivityInputListener = (callback: () => void) => {
   return () => window.removeEventListener(FOCUS_ACTIVITY_INPUT_EVENT, callback);
 };
 
-
 export const dispatchAddProductionStart = (content?: string) => {
   window.dispatchEvent(
     new CustomEvent(ADD_PRODUCTION_START_EVENT, { detail: { content } }),
@@ -54,4 +53,3 @@ export const addConsumptionStartListener = (
   window.addEventListener(ADD_CONSUMPTION_START_EVENT, handler);
   return () => window.removeEventListener(ADD_CONSUMPTION_START_EVENT, handler);
 };
-

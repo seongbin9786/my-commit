@@ -1,5 +1,6 @@
-import { GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { getDynamoDb, TABLE_NAME } from './db';
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+
+import { getDynamoDb, TABLE_NAME } from "./db";
 
 export interface User {
   username: string;
@@ -11,12 +12,15 @@ export const findUser = async (username: string): Promise<User | undefined> => {
     new GetCommand({
       TableName: TABLE_NAME,
       Key: { username },
-    })
+    }),
   );
   return result.Item as User;
 };
 
-export const createUser = async (username: string, passwordHash: string): Promise<User> => {
+export const createUser = async (
+  username: string,
+  passwordHash: string,
+): Promise<User> => {
   const user: User = {
     username,
     passwordHash,
@@ -26,8 +30,8 @@ export const createUser = async (username: string, passwordHash: string): Promis
     new PutCommand({
       TableName: TABLE_NAME,
       Item: user,
-      ConditionExpression: 'attribute_not_exists(username)',
-    })
+      ConditionExpression: "attribute_not_exists(username)",
+    }),
   );
 
   return user;

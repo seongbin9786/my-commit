@@ -6,6 +6,8 @@ export interface ServerLogResponse {
     userId: string;
     date: string;
     content: string;
+    contentHash: string;
+    parentHash: string | null;
     updatedAt: string;
     version: number;
   };
@@ -24,10 +26,19 @@ export interface BackupItem {
 export async function saveLogToServer(
   date: string,
   content: string,
-  updatedAt?: string,
+  contentHash: string,
+  parentHash: string | null,
 ): Promise<ServerLogResponse | null> {
   const token = localStorage.getItem('token');
-  if (!token) return null;
+  if (!token) {
+    console.log('[LogService] No token found - skipping server sync');
+    return null;
+  }
+  console.log('[LogService] Saving to server:', {
+    date,
+    contentHash,
+    parentHash,
+  });
 
   try {
     const response = await fetch(`${API_URL}/raw-logs`, {
@@ -36,7 +47,7 @@ export async function saveLogToServer(
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ date, content, updatedAt }),
+      body: JSON.stringify({ date, content, contentHash, parentHash }),
     });
     if (!response.ok) {
       if (response.status === 401) {
@@ -46,7 +57,9 @@ export async function saveLogToServer(
       console.error('Failed to save log to server:', response.statusText);
       return null;
     }
-    return response.json();
+    const result = await response.json();
+    console.log('[LogService] Server save response:', result);
+    return result;
   } catch (error) {
     console.error('Failed to save log to server:', error);
     return null;
@@ -83,7 +96,11 @@ export async function getLogFromServer(
   date: string,
 ): Promise<ServerLogResponse['data'] | null> {
   const token = localStorage.getItem('token');
-  if (!token) return null;
+  if (!token) {
+    console.log('[LogService] No token found - skipping server fetch');
+    return null;
+  }
+  console.log('[LogService] Fetching from server:', { date });
 
   try {
     const response = await fetch(`${API_URL}/raw-logs/${date}`, {
@@ -98,6 +115,7 @@ export async function getLogFromServer(
       return null;
     }
     const data = await response.json();
+    console.log('[LogService] Server fetch response:', data);
     return data;
   } catch (error) {
     console.error('Failed to fetch log from server:', error);

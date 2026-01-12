@@ -1,4 +1,4 @@
-import { LogIn, LogOut, User, UserPlus } from 'lucide-react';
+import { LogIn, LogOut, User } from 'lucide-react';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -32,24 +32,13 @@ export const AuthHeader = () => {
   if (!isAuthenticated) {
     return (
       <>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => openModal('login')}
-            className="btn btn-ghost btn-sm gap-1.5 rounded-lg font-medium text-base-content/70 transition-colors hover:bg-base-content/10 hover:text-base-content"
-          >
-            <LogIn size={15} />
-            <span className="hidden sm:inline">로그인</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => openModal('signup')}
-            className="btn btn-primary btn-sm gap-1.5 rounded-lg shadow-md shadow-primary/20 transition-all hover:shadow-primary/30"
-          >
-            <UserPlus size={15} />
-            <span className="hidden sm:inline">회원가입</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => openModal('login')}
+          className="btn btn-ghost btn-sm gap-1.5 rounded-lg font-medium text-base-content/70 transition-colors hover:bg-base-content/10 hover:text-base-content"
+        >
+          <LogIn size={15} />
+        </button>
 
         <AuthModal
           isOpen={isModalOpen}

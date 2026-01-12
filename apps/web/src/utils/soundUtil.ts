@@ -9,7 +9,9 @@ let globalAudioContext: AudioContext | null = null;
 export const initAudioContext = () => {
   if (!globalAudioContext) {
     globalAudioContext = new (
-      window.AudioContext || (window as any).webkitAudioContext
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext
     )();
   }
   // suspended 상태면 resume
@@ -91,7 +93,9 @@ export const playNotificationSound = (frequency = 800, duration = 0.2) => {
     // AudioContext가 없으면 생성
     if (!globalAudioContext) {
       globalAudioContext = new (
-        window.AudioContext || (window as any).webkitAudioContext
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext
       )();
     }
 
@@ -148,7 +152,9 @@ export const playSoundByType = (
   if (soundType !== 'custom') {
     if (!globalAudioContext) {
       globalAudioContext = new (
-        window.AudioContext || (window as any).webkitAudioContext
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext
       )();
     }
     if (globalAudioContext.state === 'suspended') {

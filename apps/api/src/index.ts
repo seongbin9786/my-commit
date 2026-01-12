@@ -1,12 +1,13 @@
+import { compare, genSalt, hash } from "bcryptjs";
 import { Hono } from "hono";
 import { handle } from "hono/aws-lambda";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
 import { jwt } from "hono/jwt";
+import { logger } from "hono/logger";
 import { sign } from "jsonwebtoken";
-import { compare, genSalt, hash } from "bcryptjs";
+
+import { getAllLogs, getLog, getLogBackups, saveLog } from "./logs";
 import { createUser, findUser } from "./users";
-import { getLog, saveLog, getLogBackups } from "./logs";
 
 const app = new Hono();
 
@@ -17,7 +18,7 @@ app.use(
   cors({
     origin: ["http://localhost:5173", "http://localhost:4000"],
     credentials: true,
-  })
+  }),
 );
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretKey";
@@ -87,17 +88,39 @@ app.post("/auth/login", async (c) => {
 });
 
 // Log Routes
+app.get("/raw-logs", async (c) => {
+  try {
+    const payload = c.get("jwtPayload");
+    const userId = payload.username || payload.sub;
+    const logs = await getAllLogs(userId);
+    return c.json({ data: logs });
+  } catch (error) {
+    console.error("Get all logs error:", error);
+    return c.json({ message: "Internal Server Error" }, 500);
+  }
+});
+
 app.post("/raw-logs", async (c) => {
   try {
     const payload = c.get("jwtPayload");
     const userId = payload.username || payload.sub; // Hono JWT puts payload in 'jwtPayload' context
-    const { date, content, updatedAt } = await c.req.json();
+    const { date, content, contentHash, parentHash } = await c.req.json();
 
     if (!date) {
       return c.json({ message: "Date is required" }, 400);
     }
 
-    const savedLog = await saveLog(userId, date, content || "", updatedAt);
+    if (!contentHash) {
+      return c.json({ message: "contentHash is required" }, 400);
+    }
+
+    const savedLog = await saveLog(
+      userId,
+      date,
+      content || "",
+      contentHash,
+      parentHash ?? null,
+    );
     return c.json({ success: true, data: savedLog });
   } catch (error) {
     console.error("Save log error:", error);
@@ -139,6 +162,7 @@ export const handler = handle(app);
 // Export for local dev (if needed, though dev script uses tsx watch src/index.ts which needs explicit serve)
 // For local development with `tsx`, we need to serve it manually using @hono/node-server
 if (require.main === module) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { serve } = require("@hono/node-server");
   const port = Number(process.env.PORT) || 3000;
   console.log(`Server is running on port ${port}`);

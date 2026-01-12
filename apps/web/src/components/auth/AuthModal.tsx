@@ -1,4 +1,4 @@
-import { X, Lock, User as UserIcon, Loader2, ArrowRight } from 'lucide-react';
+import { ArrowRight, Loader2, Lock, User as UserIcon, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -126,7 +126,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="btn btn-ghost btn-sm btn-circle absolute right-4 top-4 z-10 text-base-content/50 hover:text-base-content"
+          className="btn btn-circle btn-ghost btn-sm absolute right-4 top-4 z-10 text-base-content/50 hover:text-base-content"
         >
           <X size={18} />
         </button>

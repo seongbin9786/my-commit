@@ -1,11 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 
+import { authReducer } from './auth';
 import { LogsReducer } from './logs';
 import { RawLogStorageSyncMiddleware } from './RawLogStorageSyncMiddleware';
 import { RestNotificationReducer } from './restNotification';
 import { SoundSettingsReducer } from './soundSettings';
-
-import { authReducer } from './auth';
 
 export const store = configureStore({
   reducer: {

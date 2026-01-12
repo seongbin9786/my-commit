@@ -1,14 +1,14 @@
-import {
-  Cloud,
-  CloudOff,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
 import clsx from 'clsx';
-import { useMemo } from 'react';
+import {
+  AlertCircle,
+  Database,
+  DatabaseBackup,
+  DatabaseZap,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+
+import { RootState } from '../../store';
 
 export const SyncStatusIndicator = () => {
   const { syncStatus, lastSyncedAt } = useSelector(
@@ -17,6 +17,10 @@ export const SyncStatusIndicator = () => {
   const isAuthenticated = useSelector(
     (state: RootState) => state.auth.isAuthenticated,
   );
+
+  const [showToast, setShowToast] = useState(false);
+  const [justSynced, setJustSynced] = useState(false);
+  const prevSyncStatusRef = useRef(syncStatus);
 
   const statusText = useMemo(() => {
     switch (syncStatus) {
@@ -35,6 +39,26 @@ export const SyncStatusIndicator = () => {
     }
   }, [syncStatus, lastSyncedAt]);
 
+  useEffect(() => {
+    if (prevSyncStatusRef.current === 'syncing' && syncStatus === 'synced') {
+      setTimeout(() => {
+        setShowToast(true);
+        setJustSynced(true);
+      }, 0);
+      const toastTimer = setTimeout(() => {
+        setShowToast(false);
+      }, 2000);
+      const syncTimer = setTimeout(() => {
+        setJustSynced(false);
+      }, 3000);
+      return () => {
+        clearTimeout(toastTimer);
+        clearTimeout(syncTimer);
+      };
+    }
+    prevSyncStatusRef.current = syncStatus;
+  }, [syncStatus]);
+
   if (!isAuthenticated) {
     return (
       <div
@@ -42,30 +66,40 @@ export const SyncStatusIndicator = () => {
         data-tip="로그인하여 데이터를 서버에 안전하게 보관하세요"
       >
         <button className="btn btn-circle btn-ghost btn-sm opacity-50">
-          <CloudOff size={16} />
+          <DatabaseZap size={16} />
         </button>
       </div>
     );
   }
 
   return (
-    <div className="tooltip tooltip-bottom" data-tip={statusText}>
-      <button
-        className={clsx('btn btn-circle btn-ghost btn-sm', {
-          'text-warning': syncStatus === 'pending',
-          'text-info': syncStatus === 'syncing',
-          'text-success': syncStatus === 'synced',
-          'text-error': syncStatus === 'error',
-        })}
-      >
-        {syncStatus === 'idle' && <Cloud size={16} />}
-        {syncStatus === 'pending' && <Cloud size={16} className="opacity-50" />}
-        {syncStatus === 'syncing' && (
-          <Loader2 size={16} className="animate-spin" />
-        )}
-        {syncStatus === 'synced' && <CheckCircle2 size={16} />}
-        {syncStatus === 'error' && <AlertCircle size={16} />}
-      </button>
+    <div className="relative">
+      <div className="tooltip tooltip-bottom" data-tip={statusText}>
+        <button
+          className={clsx('btn btn-circle btn-ghost btn-sm transition-colors', {
+            'opacity-60': syncStatus === 'pending',
+            'text-info': syncStatus === 'syncing',
+            'text-success': justSynced,
+            'text-error': syncStatus === 'error',
+          })}
+        >
+          {(syncStatus === 'idle' ||
+            (syncStatus === 'synced' && !justSynced)) && <Database size={16} />}
+          {syncStatus === 'pending' && <Database size={16} />}
+          {syncStatus === 'syncing' && <DatabaseBackup size={16} />}
+          {syncStatus === 'synced' && justSynced && (
+            <DatabaseBackup size={16} />
+          )}
+          {syncStatus === 'error' && <AlertCircle size={16} />}
+        </button>
+      </div>
+      {showToast && (
+        <div className="animate-in fade-in slide-in-from-top-1 absolute right-0 top-full z-50 mt-2 duration-200">
+          <div className="whitespace-nowrap rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs font-medium text-success shadow-lg">
+            동기화 완료
+          </div>
+        </div>
+      )}
     </div>
   );
 };
