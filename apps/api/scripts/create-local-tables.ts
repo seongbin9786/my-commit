@@ -10,6 +10,8 @@ import {
 } from "@aws-sdk/client-dynamodb";
 
 const STAGE = process.env.SLS_STAGE || "dev";
+const MAX_RETRIES = 10;
+const RETRY_DELAY = 2000; // 2초
 
 const client = new DynamoDBClient({
   region: "ap-northeast-2",
@@ -17,6 +19,10 @@ const client = new DynamoDBClient({
   credentials: {
     accessKeyId: "local",
     secretAccessKey: "local",
+  },
+  requestHandler: {
+    connectionTimeout: 3000,
+    requestTimeout: 5000,
   },
 });
 
@@ -55,7 +61,30 @@ const tables = [
   },
 ];
 
+async function waitForDynamoDB() {
+  console.log("⏳ DynamoDB Local 연결 대기 중...");
+
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      await client.send(new ListTablesCommand({}));
+      console.log("✅ DynamoDB Local 연결 성공!");
+      return;
+    } catch (error) {
+      if (i === MAX_RETRIES - 1) {
+        throw new Error(
+          `DynamoDB Local에 연결할 수 없습니다. Docker 컨테이너가 실행 중인지 확인하세요.\n` +
+          `명령어: docker ps | grep dynamodb`
+        );
+      }
+      console.log(`⏳ 재시도 중... (${i + 1}/${MAX_RETRIES})`);
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+    }
+  }
+}
+
 async function createTables() {
+  await waitForDynamoDB();
+
   console.log("🔍 기존 테이블 확인 중...");
 
   const { TableNames = [] } = await client.send(new ListTablesCommand({}));
