@@ -2,6 +2,7 @@ import type { TypedStartListening } from '@reduxjs/toolkit';
 import { createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
 
 import { loadFromStorage, saveToStorage } from '../utils/StorageUtil';
+import { saveLogToServer } from '../services/LogService';
 import type { AppDispatch, RootState } from '.';
 import { goToNextDate, goToPrevDate, goToToday, updateRawLog } from './logs';
 
@@ -25,6 +26,8 @@ startAppListening({
     const nextRawLogs = action.payload;
     saveToStorage(currentDate, nextRawLogs);
     console.log(`[middleware] saved at ${currentDate}`);
+    // Server Sync (Backup)
+    saveLogToServer(currentDate, nextRawLogs);
   },
 });
 

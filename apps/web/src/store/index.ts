@@ -5,11 +5,14 @@ import { RawLogStorageSyncMiddleware } from './RawLogStorageSyncMiddleware';
 import { RestNotificationReducer } from './restNotification';
 import { SoundSettingsReducer } from './soundSettings';
 
+import { authReducer } from './auth';
+
 export const store = configureStore({
   reducer: {
     logs: LogsReducer,
     restNotification: RestNotificationReducer,
     soundSettings: SoundSettingsReducer,
+    auth: authReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().prepend(RawLogStorageSyncMiddleware.middleware),
