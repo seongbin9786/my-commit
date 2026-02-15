@@ -2,7 +2,7 @@ import { randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { serve } from "@hono/node-server";
-import { Hono, type Context } from "hono";
+import { type Context, Hono } from "hono";
 import { handle } from "hono/aws-lambda";
 import { cors } from "hono/cors";
 import { jwt } from "hono/jwt";
