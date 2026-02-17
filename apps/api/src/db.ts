@@ -33,11 +33,11 @@ export const getDynamoDb = (): DynamoDBDocumentClient => {
 };
 
 export const TABLE_NAME =
-  process.env.DYNAMODB_TABLE_USERS ||
-  `my-time-users-${process.env.SLS_STAGE || "dev"}`;
+  process.env.DYNAMODB_USERS_TABLE_NAME ||
+  `${process.env.SLS_STAGE || "dev"}-my-time-users`;
 export const LOGS_TABLE_NAME =
-  process.env.DYNAMODB_TABLE ||
-  `my-time-logs-${process.env.SLS_STAGE || "dev"}`;
+  process.env.DYNAMODB_LOGS_TABLE_NAME ||
+  `${process.env.SLS_STAGE || "dev"}-my-time-logs`;
 export const LOG_BACKUPS_TABLE_NAME =
-  process.env.DYNAMODB_TABLE_BACKUPS ||
-  `my-time-log-backups-${process.env.SLS_STAGE || "dev"}`;
+  process.env.DYNAMODB_LOG_BACKUPS_TABLE_NAME ||
+  `${process.env.SLS_STAGE || "dev"}-my-time-log-backups`;

@@ -15,6 +15,16 @@ provider:
     cors:
       allowedOrigins:
         - ${self:custom.webOrigin.${self:provider.stage}, self:custom.webOrigin.dev}
+        - http://localhost:3000
+        - https://localhost:3000
+        - http://localhost:5173
+        - https://localhost:5173
+        - http://localhost:5174
+        - https://localhost:5174
+        - http://localhost:6006
+        - https://localhost:6006
+        - http://localhost:4000
+        - https://localhost:4000
       allowedHeaders:
         - Content-Type
         - Authorization
@@ -29,11 +39,11 @@ provider:
 
   environment:
     SLS_STAGE: ${self:provider.stage}
-    DYNAMODB_TABLE_USERS: ${self:custom.usersTableName}
-    DYNAMODB_TABLE: ${self:custom.logsTableName}
-    DYNAMODB_TABLE_BACKUPS: ${self:custom.logBackupsTableName}
+    DYNAMODB_USERS_TABLE_NAME: ${self:custom.usersTableName}
+    DYNAMODB_LOGS_TABLE_NAME: ${self:custom.logsTableName}
+    DYNAMODB_LOG_BACKUPS_TABLE_NAME: ${self:custom.logBackupsTableName}
     JWT_SECRET: ${env:JWT_SECRET}
-    ALLOWED_ORIGINS: ${self:custom.webOrigin.${self:provider.stage}, self:custom.webOrigin.dev}
+    ALLOWED_ORIGINS: ${self:custom.webOrigin.${self:provider.stage}, self:custom.webOrigin.dev},http://localhost:3000,https://localhost:3000,http://localhost:5173,https://localhost:5173,http://localhost:5174,https://localhost:5174,http://localhost:6006,https://localhost:6006,http://localhost:4000,https://localhost:4000
     IS_OFFLINE: ${self:custom.isOffline.${self:provider.stage}, 'false'}
 
   iam:
@@ -53,9 +63,9 @@ provider:
             - !GetAtt LogBackupsTable.Arn
 
 custom:
-  usersTableName: my-time-users-${self:provider.stage}
-  logsTableName: my-time-logs-${self:provider.stage}
-  logBackupsTableName: my-time-log-backups-${self:provider.stage}
+  usersTableName: ${self:provider.stage}-my-time-users
+  logsTableName: ${self:provider.stage}-my-time-logs
+  logBackupsTableName: ${self:provider.stage}-my-time-log-backups
   webOrigin:
     local: http://localhost:5173
     dev: ${env:WEB_ORIGIN, 'https://d26x4qtxlzxa3w.cloudfront.net'}
