@@ -3,14 +3,65 @@ import * as XLSX from 'xlsx';
 
 import { bulkSaveLogsToServer } from '../../services/LogService';
 import { calculateHashSync } from '../../utils/HashUtil';
-import { clearAllLogData, saveToStorage } from '../../utils/StorageUtil';
+import {
+  clearAllLogData,
+  loadFromStorage,
+  saveToStorage,
+} from '../../utils/StorageUtil';
 import { BACKUP_VERSION, BackupData } from './types';
 
 const LOG_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 const SETTING_KEYS = ['soundSettings', 'targetPace', 'app-theme'];
+const STORAGE_WRAPPER_KEYS = new Set([
+  'content',
+  'contentHash',
+  'parentHash',
+  'localUpdatedAt',
+]);
+const MAX_UNWRAP_DEPTH = 10;
+
+const unwrapStorageWrapperOnce = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('{') || !trimmed.endsWith('}')) {
+    return raw;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!parsed || typeof parsed !== 'object') {
+      return raw;
+    }
+
+    const record = parsed as Record<string, unknown>;
+    if (typeof record.content !== 'string') {
+      return raw;
+    }
+
+    const keys = Object.keys(record);
+    if (keys.length === 0 || !keys.every((key) => STORAGE_WRAPPER_KEYS.has(key))) {
+      return raw;
+    }
+
+    return record.content;
+  } catch {
+    return raw;
+  }
+};
+
+const normalizeLogContent = (raw: string): string => {
+  let current = raw;
+  for (let i = 0; i < MAX_UNWRAP_DEPTH; i++) {
+    const unwrapped = unwrapStorageWrapperOnce(current);
+    if (unwrapped === current) {
+      return current;
+    }
+    current = unwrapped;
+  }
+  return current;
+};
 
 export const createBackup = (): BackupData => {
-  const logs: Record<string, string> = {};
+  const logEntries: Array<[string, string]> = [];
   const settings: Record<string, string> = {};
 
   for (let i = 0; i < localStorage.length; i++) {
@@ -18,11 +69,15 @@ export const createBackup = (): BackupData => {
     if (!key) continue;
 
     if (LOG_DATE_REGEX.test(key)) {
-      logs[key] = localStorage.getItem(key) || '';
+      const content = loadFromStorage(key).content;
+      logEntries.push([key, normalizeLogContent(content)]);
     } else if (SETTING_KEYS.includes(key)) {
       settings[key] = localStorage.getItem(key) || '';
     }
   }
+
+  logEntries.sort(([a], [b]) => a.localeCompare(b));
+  const logs = Object.fromEntries(logEntries);
 
   return {
     version: BACKUP_VERSION,
@@ -161,9 +216,10 @@ export const importBackup = async (file: File): Promise<ImportBackupReport> => {
         }
 
         const token = localStorage.getItem('token');
-        const logEntries = Object.entries(backup.logs).filter(([key]) =>
-          LOG_DATE_REGEX.test(key),
-        );
+        const logEntries = Object.entries(backup.logs)
+          .filter(([key]) => LOG_DATE_REGEX.test(key))
+          .map(([date, content]) => [date, normalizeLogContent(content)] as const)
+          .sort(([a], [b]) => a.localeCompare(b));
         const emptyLogs = logEntries.filter(([, value]) => !value);
 
         // 1. 기존 로그 데이터 삭제 (For both sync and local modes, to ensure clean state)
@@ -280,7 +336,7 @@ export const exportLogsToExcel = () => {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && LOG_DATE_REGEX.test(key)) {
-      const rawLog = localStorage.getItem(key) || '';
+      const rawLog = normalizeLogContent(loadFromStorage(key).content);
       // Simple parsing or raw dump? Let's parse simple line based if possible, or just raw.
       // Requirements say "Excel (Spreadsheet)". Better to have readable format.
       // But currently raw log is just text. Parsing logic is in `logs.ts`.
@@ -317,12 +373,15 @@ export const fetchAndDownloadServerBackup = async (token: string) => {
   }
 
   const result = await response.json();
-  const serverLogs = result.data;
+  const serverLogs = result.data as Array<{ date: string; content: string }>;
+  const sortedServerLogs = [...serverLogs].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
 
   const backupData: BackupData = {
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    logs: serverLogs.reduce(
+    logs: sortedServerLogs.reduce(
       (acc: Record<string, string>, log: { date: string; content: string }) => {
         acc[log.date] = log.content;
         return acc;
