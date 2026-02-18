@@ -8,6 +8,7 @@ provider:
   runtime: nodejs18.x
   region: ${opt:region, 'ap-northeast-2'}
   stage: ${opt:stage, 'dev'}
+  stackName: ${self:provider.stage}-${self:service}
 
 custom:
   bucketName: my-time-web-sb-${self:provider.stage}
