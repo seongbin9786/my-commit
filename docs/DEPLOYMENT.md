@@ -1,4 +1,4 @@
-# My Time 배포 가이드
+# My Commit 배포 가이드
 
 ## 1) 가장 빠른 수동 배포
 
@@ -58,7 +58,7 @@ pnpm run deploy:prod
 | 변수           | 계산 방식                                             | 용도              |
 | -------------- | ----------------------------------------------------- | ----------------- |
 | `WEB_ORIGIN`   | `https://WEB_DOMAIN_NAME`                             | API CORS          |
-| `VITE_API_URL` | `<stage>-my-time-api` 스택의 `HttpApiUrl` Output 조회 | Web 빌드 환경변수 |
+| `VITE_API_URL` | `<stage>-my-commit-api` 스택의 `HttpApiUrl` Output 조회 | Web 빌드 환경변수 |
 
 ## 3) 커스텀 도메인 (필수)
 
@@ -96,7 +96,7 @@ API URL:
 
 ```bash
 aws cloudformation describe-stacks \
-  --stack-name prod-my-time-api \
+  --stack-name prod-my-commit-api \
   --region ap-northeast-2 \
   --query 'Stacks[0].Outputs[?OutputKey==`HttpApiUrl`].OutputValue' \
   --output text
@@ -106,7 +106,7 @@ Web URL:
 
 ```bash
 aws cloudformation describe-stacks \
-  --stack-name prod-my-time-web \
+  --stack-name prod-my-commit-web \
   --region ap-northeast-2 \
   --query 'Stacks[0].Outputs[?OutputKey==`CloudFrontURL`].OutputValue' \
   --output text
