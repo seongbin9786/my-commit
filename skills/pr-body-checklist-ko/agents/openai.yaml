@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR 본문 체크리스트"
+  short_description: "한국어 PR 본문을 체크박스 형식으로 고정"
+  default_prompt: "Use $pr-body-checklist-ko to write the PR body in the required checklist format."
