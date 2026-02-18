@@ -140,9 +140,9 @@ GET  /raw-logs/:date    - 날짜별 로그 조회
 | ---------------------- | ----------------------- | --------------------- |
 | `AWS_REGION`           | AWS 리전                | ap-northeast-2        |
 | `IS_OFFLINE`           | 로컬 DynamoDB 사용 여부 | false                 |
-| `JWT_SECRET`           | JWT 서명 키             | -                     |
-| `DYNAMODB_TABLE_USERS` | 사용자 테이블명         | my-time-users-{stage} |
-| `DYNAMODB_TABLE`       | 로그 테이블명           | my-time-logs-{stage}  |
+| `JWT_SECRET`           | JWT 서명 키(고정값)     | -                     |
+| `DYNAMODB_USERS_TABLE_NAME` | 사용자 테이블명    | {stage}-my-time-users |
+| `DYNAMODB_LOGS_TABLE_NAME`  | 로그 테이블명      | {stage}-my-time-logs  |
 | `PORT`                 | 서버 포트               | 3000                  |
 
 ## 테스트 환경 비교
