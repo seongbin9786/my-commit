@@ -80,6 +80,86 @@ describe('backupService', () => {
     });
   });
 
+  describe('createBackup', () => {
+    const mockStorage: Record<string, string> = {};
+    const storageMock = {
+      setItem: vi.fn((key, value) => {
+        mockStorage[key] = value;
+      }),
+      getItem: vi.fn((key) => mockStorage[key] || null),
+      removeItem: vi.fn((key) => {
+        delete mockStorage[key];
+      }),
+      clear: vi.fn(() => {
+        Object.keys(mockStorage).forEach((k) => delete mockStorage[k]);
+      }),
+      key: vi.fn((i) => Object.keys(mockStorage)[i] || null),
+      length: 0,
+    };
+
+    beforeEach(() => {
+      Object.keys(mockStorage).forEach((k) => delete mockStorage[k]);
+      vi.clearAllMocks();
+      Object.defineProperty(storageMock, 'length', {
+        get: () => Object.keys(mockStorage).length,
+        configurable: true,
+      });
+      vi.stubGlobal('localStorage', storageMock);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('should sort log dates in ascending order when exporting', async () => {
+      storageMock.setItem(
+        '2026-01-12',
+        JSON.stringify({
+          content: 'second',
+          contentHash: 'hash-2',
+          parentHash: null,
+          localUpdatedAt: '2026-01-12T00:00:00Z',
+        }),
+      );
+      storageMock.setItem(
+        '2026-01-10',
+        JSON.stringify({
+          content: 'first',
+          contentHash: 'hash-1',
+          parentHash: null,
+          localUpdatedAt: '2026-01-10T00:00:00Z',
+        }),
+      );
+
+      const { createBackup } = await import('./backupService');
+      const backup = createBackup();
+
+      expect(Object.keys(backup.logs)).toEqual(['2026-01-10', '2026-01-12']);
+    });
+
+    it('should unwrap storage wrapper content when exporting', async () => {
+      storageMock.setItem(
+        '2026-01-12',
+        JSON.stringify({
+          content: JSON.stringify({
+            content: '[09:00] + 작업',
+            contentHash: 'inner-hash',
+            parentHash: null,
+            localUpdatedAt: '2026-01-12T00:00:00Z',
+          }),
+          contentHash: 'outer-hash',
+          parentHash: null,
+          localUpdatedAt: '2026-01-12T00:00:00Z',
+        }),
+      );
+
+      const { createBackup } = await import('./backupService');
+      const backup = createBackup();
+
+      expect(backup.logs['2026-01-12']).toBe('[09:00] + 작업');
+    });
+  });
+
   describe('importBackup', () => {
     const mockStorage: Record<string, string> = {};
     const storageMock = {
@@ -149,6 +229,27 @@ describe('backupService', () => {
         '2025-12-25',
         expect.stringContaining('log content'),
       );
+    });
+
+    it('should normalize wrapped content from backup on import', async () => {
+      const wrapped = JSON.stringify({
+        content: '[09:00] + 작업',
+        contentHash: 'old-hash',
+        parentHash: null,
+        localUpdatedAt: '2026-01-12T00:00:00Z',
+      });
+      const mockBackup = {
+        logs: { '2025-12-25': wrapped },
+        settings: {},
+      };
+      const file = createMockFile(mockBackup, 'backup.json');
+
+      const { importBackup } = await import('./backupService');
+      await importBackup(file);
+
+      const stored = mockStorage['2025-12-25'];
+      const parsed = JSON.parse(stored);
+      expect(parsed.content).toBe('[09:00] + 작업');
     });
 
     it('should import legacy format backup and sync to server', async () => {
