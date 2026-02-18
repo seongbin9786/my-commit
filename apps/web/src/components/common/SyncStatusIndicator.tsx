@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../store';
+import { formatSyncDuration } from '../../utils/syncTime';
 
 export const SyncStatusIndicator = () => {
   const { syncStatus, lastSyncedAt } = useSelector(
@@ -20,7 +21,16 @@ export const SyncStatusIndicator = () => {
 
   const [showToast, setShowToast] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
+  const [lastSyncDurationMs, setLastSyncDurationMs] = useState<number | null>(
+    null,
+  );
   const prevSyncStatusRef = useRef(syncStatus);
+  const syncAttemptStartedAtRef = useRef<number | null>(null);
+
+  const formattedDuration = useMemo(
+    () => formatSyncDuration(lastSyncDurationMs),
+    [lastSyncDurationMs],
+  );
 
   const statusText = useMemo(() => {
     switch (syncStatus) {
@@ -31,16 +41,34 @@ export const SyncStatusIndicator = () => {
       case 'syncing':
         return '서버에 저장 중...';
       case 'synced':
-        return `저장됨 (${lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString() : '방금'})`;
+        return `저장됨 (${lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString() : '방금'}${formattedDuration ? `, ${formattedDuration}` : ''})`;
       case 'error':
         return '저장 실패';
       default:
         return '';
     }
-  }, [syncStatus, lastSyncedAt]);
+  }, [syncStatus, lastSyncedAt, formattedDuration]);
 
   useEffect(() => {
-    if (prevSyncStatusRef.current === 'syncing' && syncStatus === 'synced') {
+    const wasSyncAttempting =
+      prevSyncStatusRef.current === 'pending' ||
+      prevSyncStatusRef.current === 'syncing';
+    const isSyncAttempting =
+      syncStatus === 'pending' || syncStatus === 'syncing';
+
+    if (isAuthenticated && isSyncAttempting && !wasSyncAttempting) {
+      syncAttemptStartedAtRef.current = Date.now();
+    }
+
+    if (isAuthenticated && wasSyncAttempting && syncStatus === 'synced') {
+      if (syncAttemptStartedAtRef.current) {
+        const durationMs = Date.now() - syncAttemptStartedAtRef.current;
+        setTimeout(() => {
+          setLastSyncDurationMs(durationMs);
+        }, 0);
+      }
+      syncAttemptStartedAtRef.current = null;
+      prevSyncStatusRef.current = syncStatus;
       setTimeout(() => {
         setShowToast(true);
         setJustSynced(true);
@@ -56,8 +84,13 @@ export const SyncStatusIndicator = () => {
         clearTimeout(syncTimer);
       };
     }
+
+    if (!isAuthenticated || syncStatus === 'error' || syncStatus === 'idle') {
+      syncAttemptStartedAtRef.current = null;
+    }
+
     prevSyncStatusRef.current = syncStatus;
-  }, [syncStatus]);
+  }, [syncStatus, isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -96,7 +129,7 @@ export const SyncStatusIndicator = () => {
       {showToast && (
         <div className="animate-in fade-in slide-in-from-top-1 absolute right-0 top-full z-50 mt-2 duration-200">
           <div className="whitespace-nowrap rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs font-medium text-success shadow-lg">
-            동기화 완료
+            동기화 완료{formattedDuration ? ` (${formattedDuration})` : ''}
           </div>
         </div>
       )}
