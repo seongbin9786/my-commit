@@ -62,9 +62,12 @@ startAppListening({
       const { isCurrentDateServerFetchComplete } = listenerApi.getState().logs;
       if (!isCurrentDateServerFetchComplete) {
         console.log(
-          '[middleware] skip upload until current date server fetch completes',
+          '[middleware] wait upload until current date server fetch completes',
         );
-        return;
+        await listenerApi.condition(
+          (_, currentState) =>
+            currentState.logs.isCurrentDateServerFetchComplete,
+        );
       }
 
       listenerApi.dispatch(setSyncStatus('syncing'));
@@ -227,6 +230,8 @@ startAppListening({
     } catch (e) {
       console.error(e);
       listenerApi.dispatch(setSyncStatus('error'));
+      // fetch 실패 시에도 영구 대기 상태가 되지 않도록 완료 처리
+      listenerApi.dispatch(setCurrentDateServerFetchComplete(true));
     }
   },
 });
