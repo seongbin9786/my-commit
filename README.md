@@ -16,12 +16,42 @@ my-time/
 
 ## 🚀 빠른 시작 (Getting Started)
 
-### 1) 로컬 실행
+### 1) 로컬 실행 (권장: API + Web)
 
 ```bash
+# 1. 환경 변수 파일
 cp .env.example .env.local
+
+# 2. 의존성 설치
 pnpm install
-pnpm dev
+```
+
+터미널 1:
+
+```bash
+# DynamoDB Local 시작 + 테이블 생성 + API 실행
+pnpm --filter my-time-api local:start
+```
+
+터미널 2:
+
+```bash
+# Web 실행
+pnpm dev:web
+```
+
+문제 없이 시작되면:
+
+- Web: http://localhost:5173
+- API: http://localhost:3000
+- DynamoDB Local: http://localhost:8000
+
+`pnpm dev`는 전체 앱을 동시에 띄우지만, DynamoDB 테이블은 자동 생성하지 않습니다.
+처음 실행하거나 `.dynamodb-data`를 삭제한 경우 아래를 먼저 실행하세요.
+
+```bash
+pnpm --filter my-time-api db:start
+pnpm --filter my-time-api db:create-tables
 ```
 
 ### 2) 빌드
@@ -57,6 +87,9 @@ pnpm run deploy:prod
 ## 📦 배포
 
 Full AWS 스택으로 배포됩니다 (S3 + CloudFront + Lambda + DynamoDB)
+
+원격 DynamoDB 테이블은 배포 시 `apps/api/serverless.yml`의 `resources` 정의로 자동 생성됩니다.
+처음 배포 때 별도 수동 생성은 필요하지 않습니다.
 
 상세한 배포 가이드는 **[docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)** 참고
 
@@ -155,6 +188,24 @@ VITE_API_URL=http://localhost:3000
 프로덕션 배포에서는 `VITE_API_URL`을 수동 입력하지 않습니다.
 배포 시 API Gateway endpoint를 자동 조회해 주입합니다.
 자세한 내용은 `docs/DEPLOYMENT.md` 참고
+
+## 🧯 로컬 로그인 트러블슈팅
+
+- 에러: `ResourceNotFoundException: Cannot do operations on a non-existent table`
+  - 원인: 로컬 DynamoDB 테이블 미생성
+  - 해결:
+
+```bash
+pnpm --filter my-time-api db:create-tables
+```
+
+- 에러: `ECONNREFUSED ::1:8000` 또는 `ECONNREFUSED 127.0.0.1:8000`
+  - 원인: DynamoDB Local 컨테이너 미실행
+  - 해결:
+
+```bash
+pnpm --filter my-time-api db:start
+```
 
 ## 💰 AWS 프리티어
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../store';
+import { formatSyncDuration } from '../../utils/syncTime';
 
 interface Props {
   onClick: () => void;
@@ -19,14 +20,37 @@ export const DataManagementButton = ({ onClick }: Props) => {
 
   const [showToast, setShowToast] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
+  const [lastSyncDurationMs, setLastSyncDurationMs] = useState<number | null>(
+    null,
+  );
   const prevSyncStatusRef = useRef(syncStatus);
+  const syncAttemptStartedAtRef = useRef<number | null>(null);
+  const formattedDuration = formatSyncDuration(lastSyncDurationMs);
 
   useEffect(() => {
-    if (
-      isAuthenticated &&
-      prevSyncStatusRef.current === 'syncing' &&
-      syncStatus === 'synced'
-    ) {
+    const wasSyncAttempting =
+      prevSyncStatusRef.current === 'pending' ||
+      prevSyncStatusRef.current === 'syncing';
+    const isSyncAttempting =
+      syncStatus === 'pending' || syncStatus === 'syncing';
+
+    if (isAuthenticated && isSyncAttempting && !wasSyncAttempting) {
+      syncAttemptStartedAtRef.current = Date.now();
+      setTimeout(() => {
+        setShowToast(false);
+        setJustSynced(false);
+      }, 0);
+    }
+
+    if (isAuthenticated && wasSyncAttempting && syncStatus === 'synced') {
+      if (syncAttemptStartedAtRef.current) {
+        const durationMs = Date.now() - syncAttemptStartedAtRef.current;
+        setTimeout(() => {
+          setLastSyncDurationMs(durationMs);
+        }, 0);
+      }
+      syncAttemptStartedAtRef.current = null;
+      prevSyncStatusRef.current = syncStatus;
       setTimeout(() => {
         setShowToast(true);
         setJustSynced(true);
@@ -42,6 +66,17 @@ export const DataManagementButton = ({ onClick }: Props) => {
         clearTimeout(syncTimer);
       };
     }
+
+    if (!isAuthenticated || syncStatus === 'error' || syncStatus === 'idle') {
+      syncAttemptStartedAtRef.current = null;
+      if (!isAuthenticated) {
+        setTimeout(() => {
+          setShowToast(false);
+          setJustSynced(false);
+        }, 0);
+      }
+    }
+
     prevSyncStatusRef.current = syncStatus;
   }, [syncStatus, isAuthenticated]);
 
@@ -54,17 +89,25 @@ export const DataManagementButton = ({ onClick }: Props) => {
       return <AlertCircle size={16} />;
     }
 
-    if (syncStatus === 'pending' || syncStatus === 'syncing' || justSynced) {
+    if (
+      syncStatus === 'pending' ||
+      syncStatus === 'syncing' ||
+      (justSynced && !isSyncAttempting)
+    ) {
       return <DatabaseBackup size={16} />;
     }
 
     return <Database size={16} />;
   };
 
-  const syncAttemptLabel =
-    syncStatus === 'pending' ? '동기화 시도 대기 중...' : '동기화 시도 중...';
+  const syncAttemptLabel = '동기화 시도 중...';
   const buttonTitle =
     isAuthenticated && isSyncAttempting ? syncAttemptLabel : '데이터 관리';
+  const shouldShowSyncAttemptToast = isAuthenticated && isSyncAttempting;
+  const shouldShowSuccessToast =
+    isAuthenticated && showToast && !isSyncAttempting;
+  const shouldShowUnauthenticatedToast =
+    !isAuthenticated && !shouldShowSyncAttemptToast && !shouldShowSuccessToast;
 
   return (
     <div className="relative">
@@ -72,7 +115,7 @@ export const DataManagementButton = ({ onClick }: Props) => {
         type="button"
         className={clsx('btn btn-circle btn-ghost transition-colors', {
           'text-info': isAuthenticated && isSyncAttempting,
-          'text-success': isAuthenticated && justSynced,
+          'text-success': isAuthenticated && justSynced && !isSyncAttempting,
           'text-error':
             (isAuthenticated && syncStatus === 'error') || !isAuthenticated,
         })}
@@ -81,7 +124,7 @@ export const DataManagementButton = ({ onClick }: Props) => {
       >
         {getIcon()}
       </button>
-      {isAuthenticated && isSyncAttempting && (
+      {shouldShowSyncAttemptToast && (
         <div className="animate-in fade-in slide-in-from-top-1 absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 duration-200">
           <div className="relative">
             <div className="whitespace-nowrap rounded-lg border border-info/40 bg-info/10 px-3 py-2 text-xs font-medium text-info shadow-lg">
@@ -91,14 +134,14 @@ export const DataManagementButton = ({ onClick }: Props) => {
           </div>
         </div>
       )}
-      {showToast && (
+      {shouldShowSuccessToast && (
         <div className="animate-in fade-in slide-in-from-top-1 absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 duration-200">
           <div className="whitespace-nowrap rounded-lg border border-success/30 bg-success/10 px-3 py-2 text-xs font-medium text-success shadow-lg">
-            동기화 완료
+            동기화 완료{formattedDuration ? ` (${formattedDuration})` : ''}
           </div>
         </div>
       )}
-      {!isAuthenticated && (
+      {shouldShowUnauthenticatedToast && (
         <div className="animate-in fade-in slide-in-from-top-1 absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 duration-200">
           <div className="relative">
             <div className="whitespace-nowrap rounded-lg border border-error bg-base-100 px-3 py-2 text-xs font-medium text-error shadow-lg">

@@ -13,6 +13,9 @@ Hono 기반 서버리스 API (AWS Lambda + DynamoDB)
 
 ## 로컬 개발 환경 설정
 
+명령어는 기본적으로 `apps/api` 디렉터리 기준입니다.
+저장소 루트에서 실행하려면 `pnpm --filter my-time-api <명령>` 형태를 사용하세요.
+
 ### 사전 요구사항
 
 - Node.js 18+
@@ -36,6 +39,8 @@ cp .env.example .env.local
 # DynamoDB Local 시작 + 테이블 생성 + 개발 서버 실행
 pnpm local:start
 ```
+
+처음 실행하거나 `.dynamodb-data`를 삭제한 경우에도 `local:start`가 테이블 생성을 자동 수행합니다.
 
 #### 방법 B: 단계별 실행
 
@@ -114,6 +119,7 @@ pnpm run deploy:prod
 ```
 
 `apps/api` 디렉터리에서 직접 `pnpm sls:deploy` 실행은 차단되어 있습니다.
+원격 DynamoDB 테이블은 `serverless.yml`의 `resources` 정의로 배포 시 자동 생성됩니다.
 
 ### 리소스 제거
 
@@ -151,6 +157,37 @@ GET  /raw-logs/:date    - 날짜별 로그 조회
 예: `local-my-time-users`, `prod-my-time-users`
 
 로컬 개발/배포 환경 변수는 모두 저장소 루트 `.env*` 파일에서 관리합니다.
+
+## 트러블슈팅
+
+### 로그인 시 `ResourceNotFoundException`
+
+다음 에러는 로컬 DynamoDB 테이블이 없는 경우 발생합니다.
+
+```text
+Cannot do operations on a non-existent table
+```
+
+해결:
+
+```bash
+pnpm db:create-tables
+```
+
+### 로그인 시 `ECONNREFUSED ...:8000`
+
+다음 에러는 DynamoDB Local 컨테이너가 꺼져 있을 때 발생합니다.
+
+```text
+connect ECONNREFUSED ::1:8000
+connect ECONNREFUSED 127.0.0.1:8000
+```
+
+해결:
+
+```bash
+pnpm db:start
+```
 
 ## 테스트 환경 비교
 
