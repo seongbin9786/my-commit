@@ -16,7 +16,18 @@
     "fix:backup-json": "node scripts/fix-contaminated-backup.mjs",
     "deploy": "bash scripts/deploy.sh",
     "deploy:prod": "pnpm run deploy -- prod",
-    "deploy:dev": "pnpm run deploy -- dev"
+    "deploy:dev": "pnpm run deploy -- dev",
+    "deploy:prod:porkbun": "UPDATE_DNS_RECORD=true pnpm run deploy -- prod --dns-provider porkbun",
+    "deploy:dev:porkbun": "UPDATE_DNS_RECORD=true pnpm run deploy -- dev --dns-provider porkbun",
+    "create:aws:acm": "bash scripts/create-aws-acm.sh",
+    "create:aws:acm:prod:porkbun": "pnpm run create:aws:acm -- prod --dns-provider porkbun --wait",
+    "create:aws:acm:dev:porkbun": "pnpm run create:aws:acm -- dev --dns-provider porkbun --wait",
+    "dns:sync": "bash scripts/sync-dns.sh",
+    "dns:sync:porkbun": "pnpm run dns:sync -- --dns-provider porkbun",
+    "dns:check:porkbun": "bash scripts/check-porkbun-dns.sh",
+    "undeploy": "bash scripts/reset-aws.sh",
+    "undeploy:prod": "pnpm run undeploy -- prod --remove-acm",
+    "undeploy:dev": "pnpm run undeploy -- dev --remove-acm"
   },
   "devDependencies": {
     "tsx": "^4.7.1",
