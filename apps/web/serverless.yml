@@ -22,7 +22,14 @@ custom:
       params:
         - index.html:
             CacheControl: 'no-cache'
-        - '*.js':
+        # Service Worker는 항상 최신 버전 체크가 가능해야 하므로 immutable 금지
+        - sw.js:
+            CacheControl: 'no-cache, no-store, must-revalidate'
+        - registerSW.js:
+            CacheControl: 'no-cache, no-store, must-revalidate'
+        - manifest.webmanifest:
+            CacheControl: 'no-cache, no-store, must-revalidate'
+        - 'workbox-*.js':
             CacheControl: 'public, max-age=31536000, immutable'
         - '*.css':
             CacheControl: 'public, max-age=31536000, immutable'
