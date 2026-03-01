@@ -1,5 +1,5 @@
 import { Bell, Timer } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { AuthHeader } from '../components/auth/AuthHeader';
@@ -8,7 +8,6 @@ import { DataManagementButton } from '../components/dataManagement/DataManagemen
 import { DayNavigator } from '../components/days/DayNavigator';
 import { TextLogContainer } from '../components/texts/TextLogContainer';
 import { Area_AvailableRestTimeChart } from '../features/AvailableRestTimeChartArea';
-import { DataManagementDialog } from '../features/dataManagement/DataManagementDialog';
 import { Area_ProductivePaceChart } from '../features/ProductivePaceChartArea';
 import {
   useRemainingTime,
@@ -18,6 +17,12 @@ import { SoundSettingsDialog } from '../features/soundSettings';
 import { ThemeSelector } from '../features/theme/ThemeSelector';
 import { RootState } from '../store';
 import { triggerCurrentDateFetch } from '../store/logs';
+
+const DataManagementDialog = lazy(() =>
+  import('../features/dataManagement/DataManagementDialog').then((module) => ({
+    default: module.DataManagementDialog,
+  })),
+);
 
 export const LogWriterPage = () => {
   // 휴식 알림 시스템 활성화
@@ -93,10 +98,22 @@ export const LogWriterPage = () => {
         isOpen={isSoundSettingsOpen}
         onClose={() => setIsSoundSettingsOpen(false)}
       />
-      <DataManagementDialog
-        isOpen={isDataManagementOpen}
-        onClose={() => setIsDataManagementOpen(false)}
-      />
+      {isDataManagementOpen && (
+        <Suspense
+          fallback={
+            <div className="modal modal-open modal-bottom sm:modal-middle">
+              <div className="modal-box flex h-40 w-full max-w-2xl items-center justify-center">
+                <span className="loading loading-spinner loading-md" />
+              </div>
+            </div>
+          }
+        >
+          <DataManagementDialog
+            isOpen={isDataManagementOpen}
+            onClose={() => setIsDataManagementOpen(false)}
+          />
+        </Suspense>
+      )}
       <ConflictDialog />
     </div>
   );

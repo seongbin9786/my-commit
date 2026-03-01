@@ -1,16 +1,23 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-import { DailySummaryPage } from './pages/DailySummaryPage';
-import { LogWriterPage } from './pages/LogWriterPage';
-
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <LogWriterPage />,
+    lazy: async () => {
+      const module = await import('./pages/LogWriterPage');
+      return {
+        Component: module.LogWriterPage,
+      };
+    },
   },
   {
     path: '/summary',
-    element: <DailySummaryPage />,
+    lazy: async () => {
+      const module = await import('./pages/DailySummaryPage');
+      return {
+        Component: module.DailySummaryPage,
+      };
+    },
   },
 ]);
 
