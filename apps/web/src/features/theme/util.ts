@@ -1,10 +1,18 @@
 import {
   AVAILABLE_THEMES,
-  DEFAULT_DARK_THEME,
-  DEFAULT_LIGHT_THEME,
+  ColorScheme,
   Theme,
+  THEME_BY_SCHEME_STORAGE_KEY,
   THEME_STORAGE_KEY,
+  ThemeByScheme,
 } from './config';
+import {
+  buildThemeBySchemeForManualSelection,
+  parseThemeBySchemePreference,
+  resolveThemeForColorSchemePolicy,
+} from './policy';
+
+const DARK_MODE_MEDIA_QUERY = '(prefers-color-scheme: dark)';
 
 export function makeThemeNameReadable(themeName: string) {
   return themeName
@@ -22,19 +30,89 @@ export function setDaisyUiThemeCssVariable(theme: Theme) {
   document.documentElement.setAttribute('data-theme', theme);
 }
 
+export function persistCurrentTheme(theme: Theme) {
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+export function getSystemColorScheme(): ColorScheme {
+  return getIsDarkMode() ? 'dark' : 'light';
+}
+
+export function resolveThemeForColorScheme(colorScheme: ColorScheme): Theme {
+  const themeByScheme = loadThemeBySchemePreference();
+  const legacyTheme = loadLegacyThemePreference();
+  const { theme, migratedThemeBySchemePreference } =
+    resolveThemeForColorSchemePolicy({
+      colorScheme,
+      themeBySchemePreference: themeByScheme,
+      legacyThemePreference: legacyTheme,
+    });
+
+  if (migratedThemeBySchemePreference) {
+    persistThemeBySchemePreference(migratedThemeBySchemePreference);
+  }
+
+  return theme;
+}
+
+export function resolveThemeForCurrentSystemColorScheme(): Theme {
+  return resolveThemeForColorScheme(getSystemColorScheme());
+}
+
+export function saveManualThemePreference(theme: Theme) {
+  const currentPreference = loadThemeBySchemePreference();
+  const nextPreference = buildThemeBySchemeForManualSelection(
+    currentPreference,
+    theme,
+  );
+  persistThemeBySchemePreference(nextPreference);
+}
+
 export function loadSavedTheme(): Theme {
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-  const validTheme = checkIsValidTheme(savedTheme)
-    ? savedTheme
-    : getIsDarkMode()
-      ? DEFAULT_DARK_THEME
-      : DEFAULT_LIGHT_THEME;
+  const theme = resolveThemeForCurrentSystemColorScheme();
 
-  setDaisyUiThemeCssVariable(validTheme);
+  setDaisyUiThemeCssVariable(theme);
+  persistCurrentTheme(theme);
 
-  return validTheme;
+  return theme;
+}
+
+export function subscribeToSystemColorSchemeChange(
+  onChange: (colorScheme: ColorScheme) => void,
+) {
+  const mediaQueryList = window.matchMedia(DARK_MODE_MEDIA_QUERY);
+  const handleChange = (event: MediaQueryListEvent) => {
+    onChange(event.matches ? 'dark' : 'light');
+  };
+
+  mediaQueryList.addEventListener('change', handleChange);
+
+  return () => {
+    mediaQueryList.removeEventListener('change', handleChange);
+  };
+}
+
+function loadThemeBySchemePreference(): Partial<ThemeByScheme> {
+  const rawPreference = localStorage.getItem(THEME_BY_SCHEME_STORAGE_KEY);
+  return parseThemeBySchemePreference(rawPreference, checkIsValidTheme);
+}
+
+function persistThemeBySchemePreference(themeByScheme: ThemeByScheme) {
+  localStorage.setItem(
+    THEME_BY_SCHEME_STORAGE_KEY,
+    JSON.stringify(themeByScheme),
+  );
+}
+
+function loadLegacyThemePreference(): Theme | null {
+  const legacyTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  if (!checkIsValidTheme(legacyTheme)) {
+    return null;
+  }
+
+  return legacyTheme;
 }
 
 function getIsDarkMode(): boolean {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return window.matchMedia(DARK_MODE_MEDIA_QUERY).matches;
 }

@@ -32,6 +32,8 @@ export const AVAILABLE_THEMES = [
 ] as const;
 
 export type Theme = (typeof AVAILABLE_THEMES)[number];
+export type ColorScheme = 'light' | 'dark';
+export type ThemeByScheme = Record<ColorScheme, Theme>;
 
 // 라이트 계열 테마 목록
 export const LIGHT_THEMES: Theme[] = [
@@ -50,5 +52,6 @@ export const LIGHT_THEMES: Theme[] = [
 ];
 
 export const THEME_STORAGE_KEY = 'app-theme';
+export const THEME_BY_SCHEME_STORAGE_KEY = 'app-theme-by-scheme';
 export const DEFAULT_LIGHT_THEME: Theme = 'cupcake';
 export const DEFAULT_DARK_THEME: Theme = 'forest';

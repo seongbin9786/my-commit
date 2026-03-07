@@ -11,7 +11,12 @@ import {
 import { BACKUP_VERSION, BackupData } from './types';
 
 const LOG_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const SETTING_KEYS = ['soundSettings', 'targetPace', 'app-theme'];
+const SETTING_KEYS = [
+  'soundSettings',
+  'targetPace',
+  'app-theme',
+  'app-theme-by-scheme',
+];
 const DEFAULT_BACKUP_SOUND_TYPES = new Set(['beep', 'bell', 'chime']);
 const SOUND_SETTINGS_KEY = 'soundSettings';
 const STORAGE_WRAPPER_KEYS = new Set([

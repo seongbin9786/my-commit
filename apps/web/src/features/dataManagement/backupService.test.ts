@@ -256,6 +256,23 @@ describe('backupService', () => {
         infiniteRepeat: true,
       });
     });
+
+    it('should include app-theme-by-scheme in backup settings', async () => {
+      storageMock.setItem(
+        'app-theme-by-scheme',
+        JSON.stringify({
+          light: 'cupcake',
+          dark: 'night',
+        }),
+      );
+
+      const { createBackup } = await import('./backupService');
+      const backup = createBackup();
+
+      expect(backup.settings['app-theme-by-scheme']).toBe(
+        '{"light":"cupcake","dark":"night"}',
+      );
+    });
   });
 
   describe('importBackup', () => {
@@ -315,7 +332,10 @@ describe('backupService', () => {
     it('should import new format backup', async () => {
       const mockBackup = {
         logs: { '2025-12-25': 'log content' },
-        settings: { 'app-theme': 'forest' },
+        settings: {
+          'app-theme': 'forest',
+          'app-theme-by-scheme': '{"light":"cupcake","dark":"night"}',
+        },
       };
       const file = createMockFile(mockBackup, 'backup.json');
 
@@ -323,6 +343,10 @@ describe('backupService', () => {
       await importBackup(file);
 
       expect(storageMock.setItem).toHaveBeenCalledWith('app-theme', 'forest');
+      expect(storageMock.setItem).toHaveBeenCalledWith(
+        'app-theme-by-scheme',
+        '{"light":"cupcake","dark":"night"}',
+      );
       expect(storageMock.setItem).toHaveBeenCalledWith(
         '2025-12-25',
         expect.stringContaining('log content'),
