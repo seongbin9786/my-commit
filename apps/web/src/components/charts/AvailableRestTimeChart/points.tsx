@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { Label, ReferenceDot } from 'recharts';
 
 import { minutesToTimeString } from '../../../utils/DateUtil';
@@ -7,7 +8,7 @@ export const getPoints = (data: ChartDataPoint[]) => {
   const { highPoint, lowPoint } = findHighLowPoints(data);
   const currentPointConfig = getCurrentPointConfig(data, highPoint, lowPoint);
 
-  const points: JSX.Element[] = [];
+  const points: ReactElement[] = [];
 
   if (highPoint) {
     const color = highPoint.need >= 0 ? 'red' : 'green';
