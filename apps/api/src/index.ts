@@ -16,7 +16,12 @@ import {
   getLogBackups,
   saveLog,
 } from "./logs";
-import { createUser, findUser } from "./users";
+import {
+  createUser,
+  findUser,
+  getUserSettings,
+  saveUserSettings,
+} from "./users";
 
 const app = new Hono();
 const allowedOrigins = (
@@ -144,6 +149,8 @@ const internalServerError = (c: Context, error: unknown) => {
 // Hono route pattern "/raw-logs/*" does not include "/raw-logs" itself.
 app.use("/raw-logs", jwt({ secret: JWT_SECRET }));
 app.use("/raw-logs/*", jwt({ secret: JWT_SECRET }));
+app.use("/user-settings", jwt({ secret: JWT_SECRET }));
+app.use("/user-settings/*", jwt({ secret: JWT_SECRET }));
 
 // Routes
 app.get("/", (c) => c.text("Hello from Hono!"));
@@ -197,6 +204,50 @@ app.post("/auth/login", async (c) => {
     return c.json({ access_token: token });
   } catch (error) {
     logRouteError(c, "Login error:", error);
+    return internalServerError(c, error);
+  }
+});
+
+app.get("/user-settings", async (c) => {
+  try {
+    const payload = c.get("jwtPayload");
+    const username = payload?.username || payload?.sub;
+    if (!username) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+
+    const settings = await getUserSettings(username);
+    return c.json({ success: true, data: settings });
+  } catch (error) {
+    logRouteError(c, "Get user settings error:", error);
+    return internalServerError(c, error);
+  }
+});
+
+app.put("/user-settings", async (c) => {
+  try {
+    const payload = c.get("jwtPayload");
+    const username = payload?.username || payload?.sub;
+    if (!username) {
+      return c.json({ message: "Unauthorized" }, 401);
+    }
+
+    const body = (await c.req.json()) as { settings?: unknown };
+    if (
+      !body ||
+      typeof body !== "object" ||
+      !("settings" in body) ||
+      typeof body.settings !== "object" ||
+      body.settings === null ||
+      Array.isArray(body.settings)
+    ) {
+      return c.json({ message: "settings object is required" }, 400);
+    }
+
+    const savedSettings = await saveUserSettings(username, body.settings);
+    return c.json({ success: true, data: savedSettings });
+  } catch (error) {
+    logRouteError(c, "Save user settings error:", error);
     return internalServerError(c, error);
   }
 });

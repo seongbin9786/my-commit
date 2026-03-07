@@ -5,6 +5,7 @@ import {
   THEME_BY_SCHEME_STORAGE_KEY,
   THEME_STORAGE_KEY,
   ThemeByScheme,
+  ThemeSettingsPayload,
 } from './config';
 import {
   buildThemeBySchemeForManualSelection,
@@ -32,6 +33,39 @@ export function setDaisyUiThemeCssVariable(theme: Theme) {
 
 export function persistCurrentTheme(theme: Theme) {
   localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+export function getThemeSettingsSnapshot(): ThemeSettingsPayload {
+  const snapshot: ThemeSettingsPayload = {};
+  const currentTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  if (checkIsValidTheme(currentTheme)) {
+    snapshot[THEME_STORAGE_KEY] = currentTheme;
+  }
+
+  const themeByScheme = loadThemeBySchemePreference();
+  if (themeByScheme.light || themeByScheme.dark) {
+    snapshot[THEME_BY_SCHEME_STORAGE_KEY] = JSON.stringify(themeByScheme);
+  }
+
+  return snapshot;
+}
+
+export function applyThemeSettingsFromServer(payload: ThemeSettingsPayload) {
+  const theme = payload[THEME_STORAGE_KEY] ?? null;
+  if (checkIsValidTheme(theme)) {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }
+
+  const rawThemeByScheme = payload[THEME_BY_SCHEME_STORAGE_KEY];
+  if (typeof rawThemeByScheme === 'string') {
+    const parsed = parseThemeBySchemePreference(
+      rawThemeByScheme,
+      checkIsValidTheme,
+    );
+    if (parsed.light || parsed.dark) {
+      localStorage.setItem(THEME_BY_SCHEME_STORAGE_KEY, JSON.stringify(parsed));
+    }
+  }
 }
 
 export function getSystemColorScheme(): ColorScheme {

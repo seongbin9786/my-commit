@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  applyThemeSettingsFromServer,
+  getThemeSettingsSnapshot,
   resolveThemeForColorScheme,
   resolveThemeForCurrentSystemColorScheme,
   saveManualThemePreference,
@@ -85,5 +87,27 @@ describe('theme util', () => {
 
     unsubscribe();
     expect(changeHandler).toBeNull();
+  });
+
+  it('returns theme settings snapshot for server sync', () => {
+    localStorage.setItem('app-theme', 'winter');
+    localStorage.setItem('app-theme-by-scheme', '{"light":"winter"}');
+
+    expect(getThemeSettingsSnapshot()).toEqual({
+      'app-theme': 'winter',
+      'app-theme-by-scheme': '{"light":"winter"}',
+    });
+  });
+
+  it('applies server theme settings safely', () => {
+    applyThemeSettingsFromServer({
+      'app-theme': 'night',
+      'app-theme-by-scheme': '{"light":"winter","dark":"night"}',
+    });
+
+    expect(localStorage.getItem('app-theme')).toBe('night');
+    expect(localStorage.getItem('app-theme-by-scheme')).toBe(
+      '{"light":"winter","dark":"night"}',
+    );
   });
 });

@@ -53,5 +53,9 @@ export const LIGHT_THEMES: Theme[] = [
 
 export const THEME_STORAGE_KEY = 'app-theme';
 export const THEME_BY_SCHEME_STORAGE_KEY = 'app-theme-by-scheme';
+export type ThemeSettingKey =
+  | typeof THEME_STORAGE_KEY
+  | typeof THEME_BY_SCHEME_STORAGE_KEY;
+export type ThemeSettingsPayload = Partial<Record<ThemeSettingKey, string>>;
 export const DEFAULT_LIGHT_THEME: Theme = 'cupcake';
 export const DEFAULT_DARK_THEME: Theme = 'forest';
