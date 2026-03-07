@@ -125,7 +125,11 @@ export const RestTimeInputDialog: React.FC<RestTimeInputDialogProps> = ({
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             취소 (ESC)
           </button>
-          <button type="button" className="btn btn-outline" onClick={handleSkip}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={handleSkip}
+          >
             알람 없이 등록
           </button>
           <button

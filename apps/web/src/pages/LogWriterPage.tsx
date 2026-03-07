@@ -1,5 +1,5 @@
 import { Bell, Timer } from 'lucide-react';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { AuthHeader } from '../components/auth/AuthHeader';

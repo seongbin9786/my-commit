@@ -1,5 +1,5 @@
-import { Label, ReferenceDot } from 'recharts';
 import type { ReactElement } from 'react';
+import { Label, ReferenceDot } from 'recharts';
 
 import { minutesToTimeString } from '../../../utils/DateUtil';
 import type { ChartDataPoint } from './dataPoint';
