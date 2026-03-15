@@ -1,4 +1,5 @@
 import { calculateHashSync } from './HashUtil';
+import { isValidDateString } from './DateUtil';
 
 export interface LocalLogData {
   content: string;
@@ -7,13 +8,12 @@ export interface LocalLogData {
   localUpdatedAt: string; // 로컬에서 마지막 수정 시간
 }
 
-const LOG_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 export const CURRENT_DATE_STORAGE_KEY = 'my-commit:current-date';
 
 export const loadCurrentDateFromStorage = (): string | null => {
   const storedDate = localStorage.getItem(CURRENT_DATE_STORAGE_KEY);
 
-  if (!storedDate || !LOG_DATE_REGEX.test(storedDate)) {
+  if (!storedDate || !isValidDateString(storedDate)) {
     return null;
   }
 
@@ -21,7 +21,7 @@ export const loadCurrentDateFromStorage = (): string | null => {
 };
 
 export const saveCurrentDateToStorage = (date: string): void => {
-  if (!LOG_DATE_REGEX.test(date)) {
+  if (!isValidDateString(date)) {
     localStorage.removeItem(CURRENT_DATE_STORAGE_KEY);
     return;
   }
@@ -130,7 +130,7 @@ export const clearAllLogData = (): void => {
 
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && LOG_DATE_REGEX.test(key)) {
+    if (key && isValidDateString(key)) {
       keysToDelete.push(key);
     }
   }

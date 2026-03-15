@@ -29,10 +29,24 @@ describe('StorageUtil', () => {
       expect(loadCurrentDateFromStorage()).toBeNull();
     });
 
+    it('형식은 맞지만 실제 달력이 아닌 날짜는 무시해야 함', () => {
+      localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026-13-40');
+
+      expect(loadCurrentDateFromStorage()).toBeNull();
+    });
+
     it('잘못된 현재 날짜를 저장하려 하면 키를 제거해야 함', () => {
       localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026-03-15');
 
       saveCurrentDateToStorage('invalid-date');
+
+      expect(localStorage.getItem(CURRENT_DATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it('형식은 맞지만 실제 달력이 아닌 날짜를 저장하려 하면 키를 제거해야 함', () => {
+      localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026-03-15');
+
+      saveCurrentDateToStorage('2026-02-30');
 
       expect(localStorage.getItem(CURRENT_DATE_STORAGE_KEY)).toBeNull();
     });
