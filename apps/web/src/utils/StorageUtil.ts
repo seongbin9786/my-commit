@@ -1,5 +1,5 @@
-import { calculateHashSync } from './HashUtil';
 import { isValidDateString } from './DateUtil';
+import { calculateHashSync } from './HashUtil';
 
 export interface LocalLogData {
   content: string;
