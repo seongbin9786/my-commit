@@ -6,6 +6,28 @@ export const getDateString = (date: Date) => {
   )}`;
 };
 
+const DATE_STRING_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+export const isValidDateString = (dateString: string) => {
+  if (!DATE_STRING_REGEX.test(dateString)) {
+    return false;
+  }
+
+  const [yearString, monthString, dayString] = dateString.split('-');
+  const year = Number(yearString);
+  const month = Number(monthString);
+  const day = Number(dayString);
+
+  const parsedDate = new Date(year, month - 1, day);
+
+  return (
+    Number.isFinite(parsedDate.getTime()) &&
+    parsedDate.getFullYear() === year &&
+    parsedDate.getMonth() === month - 1 &&
+    parsedDate.getDate() === day
+  );
+};
+
 // TODO: validation하기
 export const justOneDayAwayAtMost = (
   dateAString: string,

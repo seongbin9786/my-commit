@@ -1,12 +1,55 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { calculateHashSync } from './HashUtil';
-import { loadFromStorage, saveToStorage } from './StorageUtil';
+import {
+  CURRENT_DATE_STORAGE_KEY,
+  loadCurrentDateFromStorage,
+  loadFromStorage,
+  saveCurrentDateToStorage,
+  saveToStorage,
+} from './StorageUtil';
 
 describe('StorageUtil', () => {
   beforeEach(() => {
     // localStorage 초기화
     localStorage.clear();
+  });
+
+  describe('current date persistence', () => {
+    it('현재 날짜를 저장하고 로드해야 함', () => {
+      saveCurrentDateToStorage('2026-03-15');
+
+      expect(localStorage.getItem(CURRENT_DATE_STORAGE_KEY)).toBe('2026-03-15');
+      expect(loadCurrentDateFromStorage()).toBe('2026-03-15');
+    });
+
+    it('잘못된 형식의 현재 날짜는 무시해야 함', () => {
+      localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026/03/15');
+
+      expect(loadCurrentDateFromStorage()).toBeNull();
+    });
+
+    it('형식은 맞지만 실제 달력이 아닌 날짜는 무시해야 함', () => {
+      localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026-13-40');
+
+      expect(loadCurrentDateFromStorage()).toBeNull();
+    });
+
+    it('잘못된 현재 날짜를 저장하려 하면 키를 제거해야 함', () => {
+      localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026-03-15');
+
+      saveCurrentDateToStorage('invalid-date');
+
+      expect(localStorage.getItem(CURRENT_DATE_STORAGE_KEY)).toBeNull();
+    });
+
+    it('형식은 맞지만 실제 달력이 아닌 날짜를 저장하려 하면 키를 제거해야 함', () => {
+      localStorage.setItem(CURRENT_DATE_STORAGE_KEY, '2026-03-15');
+
+      saveCurrentDateToStorage('2026-02-30');
+
+      expect(localStorage.getItem(CURRENT_DATE_STORAGE_KEY)).toBeNull();
+    });
   });
 
   describe('loadFromStorage', () => {

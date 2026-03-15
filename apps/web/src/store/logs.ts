@@ -7,7 +7,10 @@ import {
 } from '../utils/DateUtil';
 import { createLogsFromString } from '../utils/LogConverter';
 import { Log } from '../utils/PaceUtil';
-import { loadFromStorage } from '../utils/StorageUtil';
+import {
+  loadCurrentDateFromStorage,
+  loadFromStorage,
+} from '../utils/StorageUtil';
 
 export type ConflictState = {
   localContent: string;
@@ -28,7 +31,7 @@ export type LogState = {
 };
 
 // reducer 바깥이어서 초기값 설정 구문이 순수하지 않아도 괜찮을 듯
-const initialDate = getTodayString();
+const initialDate = loadCurrentDateFromStorage() ?? getTodayString();
 const initialLocalData = loadFromStorage(initialDate);
 
 const initialState: LogState = {
