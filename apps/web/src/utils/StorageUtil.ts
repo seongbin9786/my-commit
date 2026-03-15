@@ -7,6 +7,28 @@ export interface LocalLogData {
   localUpdatedAt: string; // 로컬에서 마지막 수정 시간
 }
 
+const LOG_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+export const CURRENT_DATE_STORAGE_KEY = 'my-commit:current-date';
+
+export const loadCurrentDateFromStorage = (): string | null => {
+  const storedDate = localStorage.getItem(CURRENT_DATE_STORAGE_KEY);
+
+  if (!storedDate || !LOG_DATE_REGEX.test(storedDate)) {
+    return null;
+  }
+
+  return storedDate;
+};
+
+export const saveCurrentDateToStorage = (date: string): void => {
+  if (!LOG_DATE_REGEX.test(date)) {
+    localStorage.removeItem(CURRENT_DATE_STORAGE_KEY);
+    return;
+  }
+
+  localStorage.setItem(CURRENT_DATE_STORAGE_KEY, date);
+};
+
 export const loadFromStorage = (key: string): LocalLogData => {
   const stored = localStorage.getItem(key);
   if (!stored) {
@@ -98,8 +120,6 @@ export const saveToStorage = (
 
 // Re-export LocalStorageManager from its new location
 export { LocalStorageManager } from './LocalStorageManager';
-
-const LOG_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * localStorage에서 모든 로그 데이터(날짜 키)를 삭제합니다.

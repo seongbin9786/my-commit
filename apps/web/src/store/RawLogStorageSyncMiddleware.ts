@@ -4,7 +4,11 @@ import { createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
 import { getLogFromServer, saveLogToServer } from '../services/LogService';
 import { detectConflict } from '../utils/ConflictDetector';
 import { calculateHashSync } from '../utils/HashUtil';
-import { loadFromStorage, saveToStorage } from '../utils/StorageUtil';
+import {
+  loadFromStorage,
+  saveCurrentDateToStorage,
+  saveToStorage,
+} from '../utils/StorageUtil';
 import type { AppDispatch, RootState } from '.';
 import { loginSuccess } from './auth';
 import {
@@ -35,6 +39,14 @@ const startAppListening =
 
 const shortHash = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.substring(0, 8) : 'null';
+
+startAppListening({
+  matcher: isAnyOf(goToToday, goToPrevDate, goToNextDate),
+  effect: async (_, listenerApi) => {
+    const { currentDate } = listenerApi.getState().logs;
+    saveCurrentDateToStorage(currentDate);
+  },
+});
 
 // localstorage에 저장 & 배업 (Server Sync with Debounce)
 startAppListening({
